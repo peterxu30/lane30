@@ -10,6 +10,90 @@
 // - auto reset the ball after it leaves the lane instead of requiring user to click
 // - clean up code: create a Game object that contains all the elements plus metadat (e.g. initialized)
 
+// import * as engine from './engine.js';
+
+class Game {
+  // contains lane, pins, ball objects
+  // Initial lane settings
+  static lane = {
+    x: 0,
+    y: 0,
+    width: 360,
+    height: 705,
+    gutter: 40
+  };
+
+  // Engine takes in lane, pins, ball objects and handles physics
+  // Game handles scoring
+  // Render takes in lane, pins, ball objects and handles drawing
+
+  // Game - handles scoring logic, resetting between frames
+  //   - Engine - handles physics
+  // Render.render(Game)
+}
+
+class Engine {
+  static ballSpeed = -7.7;
+  static frames = Array(10).fill(null).map(() => ({
+    roll1: null,
+    roll2: null,
+    total: 0,
+    cumulative: 0
+  }));
+  static currentFrame = 0;
+  static rollInFrame = 0;
+
+  // Initial lane settings
+  static lane = {
+    x: 0,
+    y: 0,
+    width: 360,
+    height: 705,
+    gutter: 40
+  };
+
+  // Ball
+  static ball = {
+    x: lane.x + lane.width / 2,
+    y: lane.y + lane.height - 60,
+    startingX: lane.x + lane.width / 2,
+    startingY: lane.y + lane.height - 60,
+    r: 25,
+    vx: 0,
+    vy: ballSpeed,
+    mass: 5,
+    rolling: false
+  };
+
+  buildPins() {
+    const rows = 4;
+    const spaceX = 90;
+    const spaceY = 50;
+    const baseY = lane.y - 20;
+    const centerX = lane.x + lane.width / 2;
+    const pins = [];
+    let id = 0;
+    for (let r = 0; r < rows; r++) {
+      const cols = r + 1;
+      const rowWidth = (cols - 1) * spaceX;
+      for (let c = 0; c < cols; c++) {
+        const x = centerX - rowWidth / 2 + c * spaceX;
+        const y = baseY + (rows - r) * spaceY;
+        pins.push({
+          id: ++id,
+          x, y,
+          r: 14.5,
+          vx: 0, vy: 0,
+          mass: 2,
+          active: true,
+          hit: false   // NEW: track if pin has been hit
+        });
+      }
+    }
+    return pins;
+  }
+}
+
 (() => {
   const canvas = document.getElementById('lane');
   const ctx = canvas.getContext('2d');
@@ -46,7 +130,7 @@
     rolling: false
   };
 
-  // Pins
+  Pins
   function buildPins() {
     const rows = 4;
     const spaceX = 90;
@@ -466,42 +550,13 @@
       
       if (i < 10) {
         frameScoreText = (f.roll1 != null ? f.roll1 : '') + ' ' + (f.roll2 != null ? f.roll2 : '');
-        rollRow.cells[baseIndex].textContent = frameScoreText//f.roll1 != null ? f.roll1 : '';
+        rollRow.cells[baseIndex].textContent = frameScoreText;
         totalRow.cells[baseIndex].textContent = f.cumulative || '';
       } else {
         // 10th frame has 3 rolls
         rollRow.cells[baseIndex].textContent = (f.roll1 != null ? f.roll1 : '') + ' ' + (f.roll2 != null ? f.roll2 : '') + (f.roll3 != null ? f.roll3 : '')
         totalRow.cells[baseIndex].textContent = f.cumulative || '';
       }
-    }
-  }
-
-  const sleepNow = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
-
-  // TODO(Peter.xu) Doesn't work
-  async function updateGameState() {
-    if (ball.y < lane.y) { // ideally this condition should be all pins stop moving
-      resetBall();
-      await sleepNow(2000);
-
-      // need a way to pause the program here
-      previousRollInFrame = rollInFrame;
-      previousFrameIsStrike = isStrike();
-      
-      if (previousFrameIsStrike) {
-        console.log("IS STRIKE");
-      }
-      console.log("ball out of bounds " + ball.y + ' ' + lane.y);
-      
-      handleRoll();
-      if (previousRollInFrame == 0 && !previousFrameIsStrike) {
-        clearHitPins();
-        resetBall();
-      } else {
-        resetGame();
-      }
-    } else {
-      console.log("ball in play "  + ball.y + ' ' + lane.y);
     }
   }
 
