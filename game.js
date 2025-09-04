@@ -10,95 +10,36 @@
 // - auto reset the ball after it leaves the lane instead of requiring user to click
 // - clean up code: create a Game object that contains all the elements plus metadat (e.g. initialized)
 
-// import * as engine from './engine.js';
 
-class Game {
-  // contains lane, pins, ball objects
-  // Initial lane settings
-  static lane = {
-    x: 0,
-    y: 0,
-    width: 360,
-    height: 705,
-    gutter: 40
-  };
+// Create three classes: Game, Engine, Render
 
-  // Engine takes in lane, pins, ball objects and handles physics
-  // Game handles scoring
-  // Render takes in lane, pins, ball objects and handles drawing
+// Game contains all game objects and computes game logic
+//   - contains lane, pins, ball, frames
+// Engine takes in lane, pins, ball objects and handles physics
+// Game handles scoring
+// Render takes in lane, pins, ball objects and handles drawing
 
-  // Game - handles scoring logic, resetting between frames
-  //   - Engine - handles physics
-  // Render.render(Game)
-}
-
-class Engine {
-  static ballSpeed = -7.7;
-  static frames = Array(10).fill(null).map(() => ({
-    roll1: null,
-    roll2: null,
-    total: 0,
-    cumulative: 0
-  }));
-  static currentFrame = 0;
-  static rollInFrame = 0;
-
-  // Initial lane settings
-  static lane = {
-    x: 0,
-    y: 0,
-    width: 360,
-    height: 705,
-    gutter: 40
-  };
-
-  // Ball
-  static ball = {
-    x: lane.x + lane.width / 2,
-    y: lane.y + lane.height - 60,
-    startingX: lane.x + lane.width / 2,
-    startingY: lane.y + lane.height - 60,
-    r: 25,
-    vx: 0,
-    vy: ballSpeed,
-    mass: 5,
-    rolling: false
-  };
-
-  buildPins() {
-    const rows = 4;
-    const spaceX = 90;
-    const spaceY = 50;
-    const baseY = lane.y - 20;
-    const centerX = lane.x + lane.width / 2;
-    const pins = [];
-    let id = 0;
-    for (let r = 0; r < rows; r++) {
-      const cols = r + 1;
-      const rowWidth = (cols - 1) * spaceX;
-      for (let c = 0; c < cols; c++) {
-        const x = centerX - rowWidth / 2 + c * spaceX;
-        const y = baseY + (rows - r) * spaceY;
-        pins.push({
-          id: ++id,
-          x, y,
-          r: 14.5,
-          vx: 0, vy: 0,
-          mass: 2,
-          active: true,
-          hit: false   // NEW: track if pin has been hit
-        });
-      }
-    }
-    return pins;
-  }
-}
+// Game - owns all game objects, handles scoring logic, resetting between frames, initialization
+//   - Engine - handles physics, updating pin hit status, ball movement status
+//     - takes in lane, pins, ball objects and updates their positions
+//     - update and resolveCollisions
+// Render.render(Game)
+//  - draw lanes
+//  - draw pins
+//  - draw ball
+//  - update scoreboard
 
 (() => {
+  // Render objects
   const canvas = document.getElementById('lane');
   const ctx = canvas.getContext('2d');
-  const ballSpeed = -7.7;
+  const scoreboard = document.getElementById('scoreboard_div');
+  const title = document.getElementById('title');
 
+  // Game objects
+  const ballSpeed = -7.7;
+  let initialized = false;
+  let pins = null;
   let frames = Array(10).fill(null).map(() => ({
     roll1: null,
     roll2: null,
@@ -107,8 +48,6 @@ class Engine {
   }));
   let currentFrame = 0;
   let rollInFrame = 0;
-
-  // Initial lane settings
   const lane = {
     x: 0,
     y: 0,
@@ -116,8 +55,6 @@ class Engine {
     height: 705,
     gutter: 40
   };
-
-  // Ball
   const ball = {
     x: lane.x + lane.width / 2,
     y: lane.y + lane.height - 60,
@@ -130,7 +67,8 @@ class Engine {
     rolling: false
   };
 
-  Pins
+  // Game methods
+  // Pins
   function buildPins() {
     const rows = 4;
     const spaceX = 90;
@@ -158,7 +96,6 @@ class Engine {
     }
     return pins;
   }
-
   // Reset
   function resetGame() {
     console.log("resetGame called")
@@ -167,7 +104,6 @@ class Engine {
     console.log(ball.x + ' ' + ball.y + ' ' + lane.y)
   }
   // document.getElementById('reset').addEventListener('click', resetGame);
-
   function resetBall() {
     ball.x = ball.startingX;
     ball.y = ball.startingY;
@@ -175,256 +111,14 @@ class Engine {
     ball.vy = ballSpeed;
     ball.rolling = false; // wait for next click
   }
-
-  // Input
-  let mouseX = null;
-  canvas.addEventListener('mousemove', e => {
-    const rect = canvas.getBoundingClientRect();
-    mouseX = e.clientX - rect.left;
-  });
-
-  canvas.addEventListener('click', () => {
-    if (!ball.rolling) {
-      ball.rolling = true; // start moving
-    } else if (ball.y < lane.y) {
-      previousRollInFrame = rollInFrame;
-      previousFrameIsStrike = isStrike();
-      
-      if (previousFrameIsStrike) {
-        console.log("IS STRIKE");
-      }
-      
-      handleRoll();
-      if (previousRollInFrame == 0 && !previousFrameIsStrike) {
-        clearHitPins();
-        resetBall();
-      } else {
-        resetGame();
-      }
-    }
-  });
-
   // TODO(peter.xu) HACK NEED TO FIX
   function isStrike() {
     const pinsHit = pins.filter(p => p.hit && !p.scored).length;
     return pinsHit === 10 && rollInFrame === 0
   }
-
   function clearHitPins() {
     pins.forEach(p => { if (p.hit) p.active = false; });
   }
-
-  // Collision
-  function resolveCollision(a, b) {
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist === 0) return;
-    const overlap = a.r + b.r - dist;
-    if (overlap > 0) {
-      const nx = dx / dist;
-      const ny = dy / dist;
-      // separate
-      a.x -= nx * overlap / 2;
-      a.y -= ny * overlap / 2;
-      b.x += nx * overlap / 2;
-      b.y += ny * overlap / 2;
-      // relative velocity
-      const rvx = b.vx - a.vx;
-      const rvy = b.vy - a.vy;
-      const velAlongNormal = rvx * nx + rvy * ny;
-      if (velAlongNormal > 0) return;
-      const restitution = -0.23;
-      const invMassA = 1 / a.mass;
-      const invMassB = 1 / b.mass;
-      const j = -(1 + restitution) * velAlongNormal / (invMassA + invMassB);
-      const ix = j * nx;
-      const iy = j * ny;
-      a.vx -= ix * invMassA;
-      a.vy -= iy * invMassA;
-      b.vx += ix * invMassB;
-      b.vy += iy * invMassB;
-
-      // mark pin as hit (if b is a pin)
-      if ("hit" in b) {
-        b.hit = true;
-      }
-      if ("hit" in a) {
-        a.hit = true;
-      }
-    }
-  }
-
-  // Physics
-  function update() {
-    // Ball movement
-    if (ball.rolling) {
-      if (mouseX != null) {
-        const minX = lane.x + ball.r;
-        const maxX = lane.x + lane.width - ball.r;
-        const targetX = Math.max(minX, Math.min(maxX, mouseX));
-        ball.x += (targetX - ball.x) * 0.18;
-      }
-      ball.y += ball.vy;
-    }
-
-    // Ball–pin collisions
-    pins.forEach(p => {
-      if (p.active) resolveCollision(ball, p);
-    });
-
-    // Pin–pin collisions
-    for (let i = 0; i < pins.length; i++) {
-      for (let j = i + 1; j < pins.length; j++) {
-        if (pins[i].active && pins[j].active) {
-          resolveCollision(pins[i], pins[j]);
-        }
-      }
-    }
-
-    // Move pins
-    pins.forEach(p => {
-      if (!p.active) return;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vx *= 0.99;
-      p.vy *= 0.99;
-
-      // check gutters/out
-      if (
-        p.x < lane.x - lane.gutter ||
-        p.x > lane.x + lane.width + lane.gutter ||
-        p.y < lane.y ||
-        p.y > lane.y + lane.height
-      ) {
-        p.active = false;
-      }
-    });
-  }
-
-  let initialized = false;
-  let pins = null;
-  const scoreboard = document.getElementById('scoreboard_div');
-  const title = document.getElementById('title');
-
-  function getTopMargin(element) {
-    const computedStyle = window.getComputedStyle(element);
-    const marginTop = parseFloat(computedStyle.marginTop);
-    return marginTop;
-  }
-
-  function getBottomMargin(element) {
-    const computedStyle = window.getComputedStyle(element);
-    const marginBottom = parseFloat(computedStyle.marginBottom);
-    return marginBottom;
-  }
-
-  function getTotalHeight(element) {
-    return element.offsetHeight + getTopMargin(element) + getBottomMargin(element);
-  }
-
-  // Draw
-  function initialize() {
-    if (!initialized) {
-      console.log("window " + window.innerWidth + ' ' + window.innerHeight);
-      console.log("canvas " + canvas.width + ' ' + canvas.height);
-
-      if (window.innerWidth < 440) {
-        ctx.canvas.width  = window.innerWidth;
-      } else {
-        ctx.canvas.width  = 440;
-      }
-
-      titleScoreboardHeight = getTotalHeight(scoreboard) + getTotalHeight(title);
-      ctx.canvas.height = window.innerHeight - titleScoreboardHeight;
-      if (ctx.canvas.height > 840) {
-        ctx.canvas.height = 840;
-      }
-
-      lane.x = (ctx.canvas.width - lane.width)/2;
-      lane.height = ctx.canvas.height;
-      ball.startingX = lane.x + lane.width / 2;
-      ball.startingY = lane.y + lane.height - 60;
-      resetBall();
-      pins = buildPins();
-      initialized = true;
-    }
-  }
-
-  function drawLane() {
-    // wood
-    ctx.fillStyle = '#c49a6c';
-    ctx.fillRect(lane.x, lane.y, lane.width, lane.height);
-
-    // gutters
-    ctx.fillStyle = '#555';
-    ctx.fillRect(lane.x - lane.gutter, lane.y, lane.gutter, lane.height);
-    ctx.fillRect(lane.x + lane.width, lane.y, lane.gutter, lane.height);
-
-    // boards (39 total → 38 lines)
-    const boardWidth = lane.width / 39;
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; // faint gray
-    ctx.lineWidth = 1;
-    for (let i = 1; i < 39; i++) {
-      const x = lane.x + i * boardWidth;
-      ctx.beginPath();
-      ctx.moveTo(x, lane.y);
-      ctx.lineTo(x, lane.y + lane.height);
-      ctx.stroke();
-    }
-
-    // arrows (7 arrows, evenly spaced)
-    const arrowY = lane.y + lane.height * 0.6;
-    const spacing = lane.width / 8; // leaves equal margins
-    ctx.fillStyle = 'black';
-
-    for (let i = 1; i <= 7; i++) {
-      const cy = arrowY + Math.abs(i - 4) * lane.height * 0.03
-      const cx = lane.x + i * spacing; // center of arrow
-      const size = 12; // arrow length
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);             // tip
-      ctx.lineTo(cx - size / 2, cy + size); // left base
-      ctx.lineTo(cx + size / 2, cy + size); // right base
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // approach dots (5 left, 5 right of centerline)
-    const dotY = lane.y + lane.height * 0.85; // closer to foul line
-    const centerX = lane.x + lane.width / 2;
-    const dotSpacing = lane.width / 14; // spread evenly left/right
-    const dotRadius = 3;
-
-    for (let i = -5; i <= 5; i++) {
-      if (i === 0) continue; // skip exact center
-      const cx = centerX + i * dotSpacing;
-      ctx.beginPath();
-      ctx.arc(cx, dotY, dotRadius, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  function drawBall() {
-    ctx.fillStyle = '#4760ff';
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function drawPins() {
-    pins.forEach(p => {
-      if (!p.active) return;
-      ctx.fillStyle = p.hit ? 'red' : 'white'; // turn red after hit
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'red';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    });
-  }
-
   function handleRoll() {
     const pinsHit = pins.filter(p => p.hit && !p.scored).length;
     pins.forEach(p => { (p.hit) ? p.scored = true : p.scored = false; });
@@ -482,7 +176,6 @@ class Engine {
     calculateCumulative();
     updateScoreboard();
   }
-
   function calculateCumulative() {
     let cumulative = 0;
     for (let i = 0; i < 10; i++) {
@@ -512,7 +205,6 @@ class Engine {
       f.cumulative = cumulative;
     }
   }
-
   function strikeBonus(frameIndex) {
     const nextFrame = frames[frameIndex + 1];
     if (!nextFrame) return 0;
@@ -526,13 +218,250 @@ class Engine {
     }
     return bonus;
   }
-
   function spareBonus(frameIndex) {
     const nextFrame = frames[frameIndex + 1];
     if (!nextFrame) return 0;
     return nextFrame.roll1 === 'X' ? 10 : nextFrame.roll1 || 0;
   }
+  // Loop
+  function tick() {
+    initialize();
+    update();
+    // updateGameState();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawLane();
+    drawPins();
+    drawBall();
+    requestAnimationFrame(tick); // recursive call
+  }
 
+  // Game input
+  let mouseX = null;
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+  });
+  canvas.addEventListener('click', () => {
+    if (!ball.rolling) {
+      ball.rolling = true; // start moving
+    } else if (ball.y < lane.y) {
+      previousRollInFrame = rollInFrame;
+      previousFrameIsStrike = isStrike();
+      
+      if (previousFrameIsStrike) {
+        console.log("IS STRIKE");
+      }
+      
+      handleRoll();
+      if (previousRollInFrame == 0 && !previousFrameIsStrike) {
+        clearHitPins();
+        resetBall();
+      } else {
+        resetGame();
+      }
+    }
+  });
+
+  // Engine methods
+  // Collision
+  function resolveCollision(a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist === 0) return;
+    const overlap = a.r + b.r - dist;
+    if (overlap > 0) {
+      const nx = dx / dist;
+      const ny = dy / dist;
+      // separate
+      a.x -= nx * overlap / 2;
+      a.y -= ny * overlap / 2;
+      b.x += nx * overlap / 2;
+      b.y += ny * overlap / 2;
+      // relative velocity
+      const rvx = b.vx - a.vx;
+      const rvy = b.vy - a.vy;
+      const velAlongNormal = rvx * nx + rvy * ny;
+      if (velAlongNormal > 0) return;
+      const restitution = -0.23;
+      const invMassA = 1 / a.mass;
+      const invMassB = 1 / b.mass;
+      const j = -(1 + restitution) * velAlongNormal / (invMassA + invMassB);
+      const ix = j * nx;
+      const iy = j * ny;
+      a.vx -= ix * invMassA;
+      a.vy -= iy * invMassA;
+      b.vx += ix * invMassB;
+      b.vy += iy * invMassB;
+
+      // mark pin as hit (if b is a pin)
+      if ("hit" in b) {
+        b.hit = true;
+      }
+      if ("hit" in a) {
+        a.hit = true;
+      }
+    }
+  }
+  // Physics
+  function update() {
+    // Ball movement
+    if (ball.rolling) {
+      if (mouseX != null) {
+        const minX = lane.x + ball.r;
+        const maxX = lane.x + lane.width - ball.r;
+        const targetX = Math.max(minX, Math.min(maxX, mouseX));
+        ball.x += (targetX - ball.x) * 0.18;
+      }
+      ball.y += ball.vy;
+    }
+
+    // Ball–pin collisions
+    pins.forEach(p => {
+      if (p.active) resolveCollision(ball, p);
+    });
+
+    // Pin–pin collisions
+    for (let i = 0; i < pins.length; i++) {
+      for (let j = i + 1; j < pins.length; j++) {
+        if (pins[i].active && pins[j].active) {
+          resolveCollision(pins[i], pins[j]);
+        }
+      }
+    }
+
+    // Move pins
+    pins.forEach(p => {
+      if (!p.active) return;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      // check gutters/out
+      if (
+        p.x < lane.x - lane.gutter ||
+        p.x > lane.x + lane.width + lane.gutter ||
+        p.y < lane.y ||
+        p.y > lane.y + lane.height
+      ) {
+        p.active = false;
+      }
+    });
+  }
+
+  // Render methods
+  function getTopMargin(element) {
+    const computedStyle = window.getComputedStyle(element);
+    const marginTop = parseFloat(computedStyle.marginTop);
+    return marginTop;
+  }
+  function getBottomMargin(element) {
+    const computedStyle = window.getComputedStyle(element);
+    const marginBottom = parseFloat(computedStyle.marginBottom);
+    return marginBottom;
+  }
+  function getTotalHeight(element) {
+    return element.offsetHeight + getTopMargin(element) + getBottomMargin(element);
+  }
+  // Draw
+  function initialize() {
+    if (!initialized) {
+      console.log("window " + window.innerWidth + ' ' + window.innerHeight);
+      console.log("canvas " + canvas.width + ' ' + canvas.height);
+
+      if (window.innerWidth < 440) {
+        ctx.canvas.width  = window.innerWidth;
+      } else {
+        ctx.canvas.width  = 440;
+      }
+
+      titleScoreboardHeight = getTotalHeight(scoreboard) + getTotalHeight(title);
+      ctx.canvas.height = window.innerHeight - titleScoreboardHeight;
+      if (ctx.canvas.height > 840) {
+        ctx.canvas.height = 840;
+      }
+
+      lane.x = (ctx.canvas.width - lane.width)/2;
+      lane.height = ctx.canvas.height;
+      ball.startingX = lane.x + lane.width / 2;
+      ball.startingY = lane.y + lane.height - 60;
+      resetBall();
+      pins = buildPins();
+      initialized = true;
+    }
+  }
+  function drawLane() {
+    // wood
+    ctx.fillStyle = '#c49a6c';
+    ctx.fillRect(lane.x, lane.y, lane.width, lane.height);
+
+    // gutters
+    ctx.fillStyle = '#555';
+    ctx.fillRect(lane.x - lane.gutter, lane.y, lane.gutter, lane.height);
+    ctx.fillRect(lane.x + lane.width, lane.y, lane.gutter, lane.height);
+
+    // boards (39 total → 38 lines)
+    const boardWidth = lane.width / 39;
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; // faint gray
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 39; i++) {
+      const x = lane.x + i * boardWidth;
+      ctx.beginPath();
+      ctx.moveTo(x, lane.y);
+      ctx.lineTo(x, lane.y + lane.height);
+      ctx.stroke();
+    }
+
+    // arrows (7 arrows, evenly spaced)
+    const arrowY = lane.y + lane.height * 0.6;
+    const spacing = lane.width / 8; // leaves equal margins
+    ctx.fillStyle = 'black';
+
+    for (let i = 1; i <= 7; i++) {
+      const cy = arrowY + Math.abs(i - 4) * lane.height * 0.03
+      const cx = lane.x + i * spacing; // center of arrow
+      const size = 12; // arrow length
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);             // tip
+      ctx.lineTo(cx - size / 2, cy + size); // left base
+      ctx.lineTo(cx + size / 2, cy + size); // right base
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // approach dots (5 left, 5 right of centerline)
+    const dotY = lane.y + lane.height * 0.85; // closer to foul line
+    const centerX = lane.x + lane.width / 2;
+    const dotSpacing = lane.width / 14; // spread evenly left/right
+    const dotRadius = 3;
+
+    for (let i = -5; i <= 5; i++) {
+      if (i === 0) continue; // skip exact center
+      const cx = centerX + i * dotSpacing;
+      ctx.beginPath();
+      ctx.arc(cx, dotY, dotRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function drawBall() {
+    ctx.fillStyle = '#4760ff';
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function drawPins() {
+    pins.forEach(p => {
+      if (!p.active) return;
+      ctx.fillStyle = p.hit ? 'red' : 'white'; // turn red after hit
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  }
   function updateScoreboard() {
     const rollRow = document.getElementById('rolls');
     const totalRow = document.getElementById('totals');
@@ -560,16 +489,5 @@ class Engine {
     }
   }
 
-  // Loop
-  function tick() {
-    initialize();
-    update();
-    // updateGameState();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawLane();
-    drawPins();
-    drawBall();
-    requestAnimationFrame(tick);
-  }
   tick();
 })();
