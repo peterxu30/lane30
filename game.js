@@ -8,6 +8,7 @@
 // - need a flashy title graphic - "Lane 30 by PKING"
 // - about section with blurb + "Vibe coded by ChatGPT, fixed by PKING."
 // - clean up abstractions
+// - ball trajectory should be affected by pin collisions
 
 // P1
 // - hook mode - where you can control the ball as it moves
@@ -15,74 +16,94 @@
 
 
 class Game {
-  static ballSpeed = -7.7;
-  static ballRadius = 25;
+  // Game constants represent the bowling lane separate from the UI. 
+  // Because physics is computed in pixels, scaling the game to different screen sizes will affect physics.
+  // Instead, we will keep the game dimensions constant and scale the UI in the Render class.
+
+  // Lane constants
+  static laneWidth = 360; // 2:1 length to width ratio
+  static laneHeight = 720; //705;
+  static gutterWidth = 40; // 1/9th of lane width
+
+  // Ball constants
+  static ballSpeed = -7.9;
+  static ballRadius = 25; // 1:14th of lane width, 1:28th of lane height
+  static ballMass = 5;
+
+  // Pin constants
+  static pinRadius = 14.4; // 1:25th of lane width, 1:50th of lane height
+  static pinMass = 2;
+  static numPinRows = 4;
+  static pinSpacingX = 90; // horizontal spacing between pins
+  static pinSpacingY = 50; // vertical spacing between rows
 
   constructor() {
     // HTML Components
+    this.title = document.getElementById('title');
+    this.scoreboard = document.getElementById('scoreboard');
     this.canvas = document.getElementById('lane');
 
     // Core components
     this.engine = new Engine();
-    this.render = new Render();
+    this.render = new Render(this.title, this.scoreboard, this.canvas);
 
     // Game objects
     this.initialized = false;
-    this.pins = null;
 
+    this.currentFrame = 0;
+    this.rollInFrame = 0;
     this.frames = Array(10).fill(null).map(() => ({
       roll1: null,
       roll2: null,
       total: 0,
       cumulative: 0
     }));
-
-    this.currentFrame = 0;
-    this.rollInFrame = 0;
-
+    
     this.lane = {
       x: 0,
       y: 0,
-      width: 360,
-      height: 705,
-      gutter: 40
+      width: Game.laneWidth,
+      height: Game.laneHeight,
+      gutter: Game.gutterWidth,
     };
 
     this.ball = {
-      x: this.lane.x + this.lane.width / 2,
-      y: this.lane.y + this.lane.height - 60,
-      startingX: this.lane.x + this.lane.width / 2,
-      startingY: this.lane.y + this.lane.height - 60,
+      x: this.lane.x + this.lane.width / 2, // start in middle of lane horizontally
+      y: this.lane.y + this.lane.height - 60, // start at beginning of lane vertically
+      startingX: this.lane.x + this.lane.width / 2, // reset X position
+      startingY: this.lane.y + this.lane.height - 60, // reset Y position
       r: Game.ballRadius,
       vx: 0,
       vy: Game.ballSpeed,
-      mass: 5,
+      mass: Game.ballMass,
       rolling: false
     };
-    this.mouseX = null;
+
+    this.pins = this.buildPins();
+    
+    // initialize mouseX to middle of lane
+    const rect = this.canvas.getBoundingClientRect();
+    this.mouseX = rect.right - rect.left / 2;
   }
 
   // Game methods
   buildPins() {
-    const rows = 4;
-    const spaceX = 90;
-    const spaceY = 50;
     const baseY = this.lane.y - 20;
     const centerX = this.lane.x + this.lane.width / 2;
     const pins = [];
     let id = 0;
-    for (let r = 0; r < rows; r++) {
+    for (let r = 0; r < Game.numPinRows; r++) {
       const cols = r + 1;
-      const rowWidth = (cols - 1) * spaceX;
+      const rowWidth = (cols - 1) * Game.pinSpacingX;
       for (let c = 0; c < cols; c++) {
-        const x = centerX - rowWidth / 2 + c * spaceX;
-        const y = baseY + (rows - r) * spaceY;
+        const x = centerX - rowWidth / 2 + c * Game.pinSpacingX;
+        const y = baseY + (Game.numPinRows - r) * Game.pinSpacingY;
         pins.push({
           id: ++id,
           x, y,
-          r: 14.5,
+          r: Game.pinRadius,
           vx: 0, vy: 0,
-          mass: 2,
+          mass: Game.pinMass,
           active: true,
           hit: false
         });
@@ -224,6 +245,12 @@ class Game {
 
     this.canvas.addEventListener('click', () => {
       if (!this.ball.rolling) {
+        // TODO(peter.xu) Clean this up
+        const minX = this.lane.x + this.ball.r;
+        const maxX = this.lane.x + this.lane.width - this.ball.r;
+        const targetX = Math.max(minX, Math.min(maxX, this.mouseX));
+        this.ball.x += (targetX - this.ball.x);
+
         this.ball.rolling = true; // start moving
       } else if (this.ball.y < this.lane.y) {
         let previousRollInFrame = this.rollInFrame;
@@ -251,7 +278,7 @@ class Game {
 
     self = this;
     function runHelper() {
-      self.engine.update(self.mouseX, self.ball, self.pins, self.lane);
+      self.engine.update(self.ball, self.pins, self.lane);
       self.render.draw(self, self.ball, self.pins, self.lane);
       window.requestAnimationFrame(runHelper); // recursive call
     }
@@ -260,7 +287,67 @@ class Game {
 }
 
 class Engine {
-  // Engine methods
+  update(ball, pins, lane) {
+    // Ball movement
+    if (ball.rolling) {
+      // disable mouse control for now
+      // if (mouseX != null) {
+      //   const minX = lane.x + ball.r;
+      //   const maxX = lane.x + lane.width - ball.r;
+      //   const targetX = Math.max(minX, Math.min(maxX, mouseX));
+      //   ball.x += (targetX - ball.x) * 0.18;
+      // }
+      ball.y += ball.vy;
+    }
+
+    // Ball–pin collisions
+    pins.forEach(p => {
+      if (p.active) this.resolveCollision(ball, p);
+    });
+
+    // Pin–pin collisions
+    for (let i = 0; i < pins.length; i++) {
+      for (let j = i + 1; j < pins.length; j++) {
+        if (pins[i].active && pins[j].active) {
+          this.resolveCollision(pins[i], pins[j]);
+        }
+      }
+    }
+
+    // TODO(peter.xu) Maybe bring horizontal ball movement back
+    // if (ball.rolling) {
+    //   ball.x += ball.vx;
+    //   ball.vx *= 0.98;
+    // }
+
+    // Move pins
+    pins.forEach(p => {
+      if (!p.active) return;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      // testing stopping the pins
+      // var beforeVx = p.vx;
+      // var decimalPlaces = 22;
+      // var decimalNumber = Math.pow(10, decimalPlaces);
+      // p.vx = -1 * Math.abs(Math.ceil(p.vx * decimalNumber) / decimalNumber);
+      // p.vy = -1 * Math.abs(Math.ceil(p.vy * decimalNumber) / decimalNumber);
+      // console.log(`Pin ${p.id} vx: ${beforeVx} -> ${p.vx}, vy: ${p.vy}`);
+
+      // check gutters/out
+      if (
+        p.x < lane.x - lane.gutter ||
+        p.x > lane.x + lane.width + lane.gutter ||
+        p.y < lane.y ||
+        p.y > lane.y + lane.height
+      ) {
+        p.active = false;
+      }
+    });
+  }
+
   resolveCollision(a, b) {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
@@ -296,62 +383,27 @@ class Engine {
         a.hit = true;
       }
     }
-  }
-
-  update(mouseX, ball, pins, lane) {
-    // Ball movement
-    if (ball.rolling) {
-      if (mouseX != null) {
-        const minX = lane.x + ball.r;
-        const maxX = lane.x + lane.width - ball.r;
-        const targetX = Math.max(minX, Math.min(maxX, mouseX));
-        ball.x += (targetX - ball.x) * 0.18;
-      }
-      ball.y += ball.vy;
-    }
-
-    // Ball–pin collisions
-    pins.forEach(p => {
-      if (p.active) this.resolveCollision(ball, p);
-    });
-
-    // Pin–pin collisions
-    for (let i = 0; i < pins.length; i++) {
-      for (let j = i + 1; j < pins.length; j++) {
-        if (pins[i].active && pins[j].active) {
-          this.resolveCollision(pins[i], pins[j]);
-        }
-      }
-    }
-
-    // Move pins
-    pins.forEach(p => {
-      if (!p.active) return;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vx *= 0.99;
-      p.vy *= 0.99;
-
-      // check gutters/out
-      if (
-        p.x < lane.x - lane.gutter ||
-        p.x > lane.x + lane.width + lane.gutter ||
-        p.y < lane.y ||
-        p.y > lane.y + lane.height
-      ) {
-        p.active = false;
-      }
-    });
-  }
+  }  
 }
 
 class Render {
-  constructor() {
-    // Render objects
-    this.canvas = document.getElementById('lane');
+  static numBoards = 39;
+  static laneFillColor = '#c49a6c';
+  static gutterFillColor = '#555';
+  static ballFillColor = '#4760ff';
+  static pinFillColor = 'white';
+  static pinHitFillColor = 'red';
+  static pinStrokeColor = 'red';
+  static pinStrokeWidth = 2;
+  static scoreboardRollsId = '#rolls';
+  static scoreboardTotalsId = '#totals';
+
+  constructor(title, scoreboard, canvas) {
+    this.title = title;
+    this.scoreboard = scoreboard;
+    this.canvas = canvas;
     this.ctx = this.canvas.getContext('2d');
-    this.scoreboard = document.getElementById('scoreboard_div');
-    this.title = document.getElementById('title');
+    this.renderScale = 1;
   }
 
   getTopMargin(element) {
@@ -370,44 +422,83 @@ class Render {
     return element.offsetHeight + this.getTopMargin(element) + this.getBottomMargin(element);
   }
 
-  initialize(game) {
+  // TODO(peter.xu) refactor this
+  initialize(game) { // game should not be passed in at all, lane, ball, pins should be passed in
     if (!game.initialized) {
-      if (window.innerWidth < 440) {
-        this.ctx.canvas.width  = window.innerWidth;
-      } else {
-        this.ctx.canvas.width  = 440;
-      }
+      // if (window.innerWidth < 440) { // we need this to adjust the width of the scoreboard
+      //   this.ctx.canvas.width  = window.innerWidth;
+      // } else {
+      //   this.ctx.canvas.width  = 440;
+      // }
 
-      const titleScoreboardHeight = this.getTotalHeight(this.scoreboard) + this.getTotalHeight(this.title);
-      this.ctx.canvas.height = window.innerHeight - titleScoreboardHeight;
-      if (this.ctx.canvas.height > 840) {
-        this.ctx.canvas.height = 840;
-      }
+      // const titleScoreboardHeight = this.getTotalHeight(this.scoreboard) + this.getTotalHeight(this.title);
+      // this.ctx.canvas.height = window.innerHeight - titleScoreboardHeight;
+      // if (this.ctx.canvas.height > 840) {
+      //   this.ctx.canvas.height = 840;
+      // }
 
-      game.lane.x = (this.ctx.canvas.width - game.lane.width)/2;
-      game.lane.height = this.ctx.canvas.height;
-      game.ball.startingX = game.lane.x + game.lane.width / 2;
-      game.ball.startingY = game.lane.y + game.lane.height - 60;
-      game.resetBall();
-      game.pins = game.buildPins();
+      // Need to know available canvas dimensions
+      const availableCanvasWidth = window.innerWidth;
+      const availableCanvasHeight = window.innerHeight - this.getTotalHeight(this.scoreboard) - this.getTotalHeight(this.title);
+
+      // Scale the game to the smallest dimension
+      // Understand the scaling ratio and apply it to both width and height of all game elements
+      // 1. Identify which dimension is smaller and calculate scaling ratio of lane's internal dimension to available dimension
+      this.renderScale = Math.min(
+        availableCanvasWidth / (game.lane.width + 2 * game.lane.gutter),
+        availableCanvasHeight / game.lane.height
+      );
+
+      // 2. Set canvas width and height based on scaling ratio
+      this.ctx.canvas.width = (game.lane.width + 2 * game.lane.gutter) * this.renderScale;
+      this.ctx.canvas.height = game.lane.height * this.renderScale;
+
+      // 2. Apply scaling ratio to both width and height of all game elements - this happens in draw methods
+
+
+      // Identify Lane X and Height in context of Canvas
+      // X = (canvas width - (lane width + 2 * gutterWidth) * scaling ratio) / 2
+      // Height = lane height * scaling ratio
+
+      // Compute lane size
+      // Lane Width = lane width * scaling ratio
+      // Lane Gutter Width = gutter width * scaling ratio
+      // Lane Height = lane height * scaling ratio
+
+      // Identify Ball Starting X and Y in context of Canvas - can just multiply existing ball x and y by scaling ratio?
+      // Ball Starting X = ball starting x * scaling ratio
+      // Ball Starting Y = ball starting y * scaling ratio
+
+      // Compute Ball Radius
+      // Ball Radius = ball radius * scaling ratio
+
+      // Identify Pin X and Y in context of Canvas - can just multiply existing pin x and y by scaling ratio?
+      // Pin X = pin x * scaling ratio
+      // Pin Y = pin y * scaling ratio
+
+      // Compute Pin Radius
+      // Pin Radius = pin radius * scaling ratio
+
+      game.lane.x = (this.ctx.canvas.width - game.lane.width)/2; // center lane horizontally
+      game.lane.height = this.ctx.canvas.height; // use full canvas height - this is incorrect because it stretches the lane based on screen size
+      game.ball.startingX = game.lane.x + game.lane.width / 2; // render logic, do not change the actual game ball
+      game.ball.startingY = game.lane.y + game.lane.height - 60; // render logic, do not change the actual game ball
+      game.resetBall(); // should only redraw ball, not modify ball object itself
+      game.pins = game.buildPins(); // should only redraw pins, not modify pin objects themselves
       game.initialized = true;
     }
   }
 
   drawLane(lane) {
-    // wood
-    this.ctx.fillStyle = '#c49a6c';
+    // lane
+    this.ctx.fillStyle = Render.laneFillColor;
     this.ctx.fillRect(lane.x, lane.y, lane.width, lane.height);
 
-    // gutters
-    this.ctx.fillStyle = '#555';
-    this.ctx.fillRect(lane.x - lane.gutter, lane.y, lane.gutter, lane.height);
-    this.ctx.fillRect(lane.x + lane.width, lane.y, lane.gutter, lane.height);
-
-    const boardWidth = lane.width / 39;
+    // lane boards
+    const boardWidth = lane.width / Render.numBoards;
     this.ctx.strokeStyle = 'rgba(0,0,0,0.15)';
     this.ctx.lineWidth = 1;
-    for (let i = 1; i < 39; i++) {
+    for (let i = 1; i < Render.numBoards; i++) {
       const x = lane.x + i * boardWidth;
       this.ctx.beginPath();
       this.ctx.moveTo(x, lane.y);
@@ -415,6 +506,12 @@ class Render {
       this.ctx.stroke();
     }
 
+    // gutters
+    this.ctx.fillStyle = Render.gutterFillColor;
+    this.ctx.fillRect(lane.x - lane.gutter, lane.y, lane.gutter, lane.height);
+    this.ctx.fillRect(lane.x + lane.width, lane.y, lane.gutter, lane.height);
+
+    // arrows
     const arrowY = lane.y + lane.height * 0.6;
     const spacing = lane.width / 8;
     this.ctx.fillStyle = 'black';
@@ -431,6 +528,7 @@ class Render {
       this.ctx.fill();
     }
 
+    // approach dots
     const dotY = lane.y + lane.height * 0.85;
     const centerX = lane.x + lane.width / 2;
     const dotSpacing = lane.width / 14;
@@ -446,7 +544,7 @@ class Render {
   }
 
   drawBall(ball) {
-    this.ctx.fillStyle = '#4760ff';
+    this.ctx.fillStyle = Render.ballFillColor;
     this.ctx.beginPath();
     this.ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
     this.ctx.fill();
@@ -455,19 +553,19 @@ class Render {
   drawPins(pins) {
     pins.forEach(p => {
       if (!p.active) return;
-      this.ctx.fillStyle = p.hit ? 'red' : 'white';
+      this.ctx.fillStyle = p.hit ? Render.pinHitFillColor : Render.pinFillColor;
       this.ctx.beginPath();
       this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       this.ctx.fill();
-      this.ctx.strokeStyle = 'red';
-      this.ctx.lineWidth = 2;
+      this.ctx.strokeStyle = Render.pinStrokeColor;
+      this.ctx.lineWidth = Render.pinStrokeWidth;
       this.ctx.stroke();
     });
   }
 
   updateScoreboard(frames) {
-    const rollRow = document.getElementById('rolls');
-    const totalRow = document.getElementById('totals');
+    const rollRow = this.scoreboard.querySelector(Render.scoreboardRollsId);
+    const totalRow = this.scoreboard.querySelector(Render.scoreboardTotalsId);
 
     for (let i = 0; i < 10; i++) {
       const f = frames[i];
