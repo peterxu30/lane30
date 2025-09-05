@@ -9,6 +9,7 @@
 // - about section with blurb + "Vibe coded by ChatGPT, fixed by PKING."
 // - clean up abstractions
 // - ball trajectory should be affected by pin collisions
+// - disable screen dragging on mobile
 
 // P1
 // - hook mode - where you can control the ball as it moves
