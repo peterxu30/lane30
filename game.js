@@ -480,6 +480,9 @@ class Render {
       this.ctx.canvas.width = (numberOfHeightUnits * (laneWidth + 2 * gutterWidth));
     }
 
+    // Resize scoreboard to match canvas width
+    this.scoreboard.style.width = `${this.ctx.canvas.width}px`;
+
     console.log(`Render initialization complete. 
     available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
     scaled canvas: ${this.ctx.canvas.width}x${this.ctx.canvas.height}, 
