@@ -15,7 +15,11 @@
       color: #fff;
       font-family: sans-serif;
       overflow-x: hidden;
-      overflow-y: hidden;
+      overflow-y: hidden;user-select: none; /* supported by Chrome and Opera */
+      -webkit-user-select: none; /* Safari */
+      -khtml-user-select: none; /* Konqueror HTML */
+      -moz-user-select: none; /* Firefox */
+      -ms-user-select: none; /* Internet Explorer/Edge */
     }
     #game {
       margin: 0px auto;
