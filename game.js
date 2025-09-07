@@ -46,9 +46,9 @@ class Game {
   static gutterWidth = 20
 
   // Ball constants
-  static ballSpeed = -8.3;
+  static ballSpeed = -8.4;
   static ballRadius = 25;
-  static ballMass = 5;
+  static ballMass = 6.5;
   static ballStartingYBuffer = 60; // distance from bottom of lane to ball starting position
 
   // Pin constants
@@ -311,7 +311,6 @@ class Game {
       this.ball.rolling = true; // start moving
     } else if (this.ball.y < this.lane.y) {
       // TODO(peter.xu) handle game over logic before handleRoll
-
 
       let previousRollInFrame = this.rollInFrame;
       let previousFrameIsStrike = this.isStrike(this.pins);
