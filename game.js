@@ -5,15 +5,15 @@
 // - allow ball to move left right before release, do not let ball be controlled post release - DONE
 // - control the ball via drag instead of click
 // - need way of ending/starting new game after tenth frame - WIP
-// - add text to tap to rerack/ball return
+// - add text to tap to rerack/ball return - DONE
 // - score should automatically update
 // - need to fix score calculation for 10th frame - DONE
 // - need to fix scoreboard on closed tenth frame - DONE
 // - need a flashy title graphic - "Lane 30 by PKING"
-// - pop on text explaining how to play + description, thank yous etc.
+// - pop on text explaining how to play + description, thank yous etc. - DONE
 // - clean up abstractions
 // - ball trajectory should be affected by pin collisions
-// - disable screen dragging on mobile
+// - disable screen dragging on mobile - DONE
 // - stop pin movement after a while
 // - reset lane when all hit active pins velocity is 0
 // - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
