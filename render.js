@@ -98,7 +98,8 @@ export class Render {
     scaled canvas: ${this.canvas.width}x${this.canvas.height}, 
     renderScale: ${this.renderScale},
     widthRatio: ${widthRatio}, 
-    heightRatio: ${heightRatio}`);
+    heightRatio: ${heightRatio},
+    devicePixelRatio: ${window.devicePixelRatio}`);
   }
 
   /**
