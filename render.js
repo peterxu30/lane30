@@ -75,7 +75,7 @@ export class Render {
       
       // 4. Scale canvas height based on aspect ratio of lane
       const numberOfWidthUnits = availableCanvasWidth / totalLaneWidth;
-      this.ctx.canvas.height = (numberOfWidthUnits * laneHeight);      
+      this.ctx.canvas.height = (numberOfWidthUnits * laneHeight);            
     } else {
       // 2. Set the renderScale to the smaller ratio
       this.renderScale = heightRatio;
@@ -87,6 +87,9 @@ export class Render {
       const numberOfHeightUnits = availableCanvasHeight / laneHeight;
       this.ctx.canvas.width = (numberOfHeightUnits * (laneWidth + 2 * gutterWidth));
     }
+
+    this.ctx.canvas.style.width = this.ctx.canvas.width * 3;
+    this.ctx.canvas.style.height = this.ctx.canvas.height * 3;
 
     // Resize scoreboard to match canvas width
     this.scoreboard.style.width = `${this.ctx.canvas.width}px`;
@@ -225,6 +228,10 @@ export class Render {
   }
 
   writeGameNotStartedText() {
+    const gameNotStartedTitle = "30th Anniversary Edition";
+    const gameNotStartedSubtitle = "Drag ball left and right to aim";
+    const gameNotStartedSecondSubtitle = "Tap to return ball";
+
     this.ctx.textAlign = 'center';
 
     const defaultTitleFontSize = 27;
@@ -236,13 +243,17 @@ export class Render {
     this.ctx.font = `bold ${adjustedTitleFontSize}px Arial`;
     const textX = (this.ctx.canvas.width)/2;
     const textY = this.ctx.canvas.height/2.5;
-    this.ctx.fillText("30th Anniversary Edition", textX, textY); 
+    this.ctx.fillText(gameNotStartedTitle, textX, textY); 
 
-    const textMetrics = this.ctx.measureText(Render.gameOverSubtitle);
+    const textMetrics = this.ctx.measureText(gameNotStartedSubtitle);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `bold ${adjustedSubtitleFontSize}px Arial`;
     const subtextY = textY + textHeight * 1.7;
-    this.ctx.fillText("Drag ball left and right to aim", textX, subtextY); 
+    this.ctx.fillText(gameNotStartedSubtitle, textX, subtextY); 
+
+    this.ctx.font = `bold ${adjustedSubtitleFontSize}px Arial`;
+    const subtext2Y = textY + textHeight * 3.4;
+    this.ctx.fillText(gameNotStartedSecondSubtitle, textX, subtext2Y); 
   }
 
   static gameOverTitle = "NICE GAME";

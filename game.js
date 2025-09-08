@@ -15,6 +15,8 @@
 // - ball trajectory should be affected by pin collisions
 // - disable screen dragging on mobile
 // - stop pin movement after a while
+// - reset lane when all hit active pins velocity is 0
+// - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
 
 // P1
 // - hook mode - where you can control the ball as it moves
