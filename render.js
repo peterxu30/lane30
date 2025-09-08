@@ -101,14 +101,21 @@ export class Render {
       this.ctx.canvas.width = (numberOfHeightUnits * (laneWidth + 2 * gutterWidth));
     }
 
-    this.ctx.canvas.style.transform = `scale(${1 / window.devicePixelRatio})`;
+    this.ctx.canvas.style.width = this.ctx.canvas.width / window.devicePixelRatio;
+    this.ctx.canvas.style.height = this.ctx.canvas.height / window.devicePixelRatio;
+    // this.ctx.canvas.style.transform = `scale(${1 / window.devicePixelRatio})`;
     this.ctx.canvas.style.transformOrigin = 'top left';
 
     // Resize scoreboard to match canvas width
-    this.scoreboard.style.width = `${this.ctx.canvas.width}px`;
-    this.scoreboard.style.height = this.scoreboard.style.height * window.devicePixelRatio;
-    this.scoreboard.style.transform = `scale(${1 / window.devicePixelRatio})`;
+    this.scoreboard.style.width = `${this.ctx.canvas.width/window.devicePixelRatio}px`;
+    // this.scoreboard.style.height = this.scoreboard.style.height * window.devicePixelRatio;
+    // this.scoreboard.style.transform = `scale(${1 / window.devicePixelRatio}, 1)`;
     this.scoreboard.style.transformOrigin = 'top left';
+
+    // Resize title to match canvas width
+    this.title.style.width = `${this.ctx.canvas.width/window.devicePixelRatio}px`;
+
+    // this.title.style.transformOrigin = 'top left';
 
     console.log(`Render initialization complete. 
     available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
@@ -233,7 +240,8 @@ export class Render {
     this.canvas.addEventListener('mousemove', e => {
       // reverse scaled based on canvas position
       const rect = this.canvas.getBoundingClientRect();
-      game.mouseX = (e.clientX - rect.left) / this.renderScale;
+      console.log(e.clientX, rect.left);
+      game.mouseX = ((e.clientX - rect.left) / this.renderScale) * window.devicePixelRatio;
     });
   }
 
