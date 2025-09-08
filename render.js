@@ -56,15 +56,28 @@ export class Render {
    * @param {*} gutterWidth the internal game gutter width
    */
   initialize(laneWidth, laneHeight, gutterWidth) {
+    var width = document.documentElement.clientWidth * window.devicePixelRatio;
+    var viewport = document.querySelector("meta[name=viewport]");
+    // viewport.setAttribute('content', 'width=' + width + ', minimum-scale= 1');
+
+    // document.documentElement.style.transform = `scale(${1 / window.devicePixelRatio})`;
+    // document.documentElement.style.transformOrigin = 'top left';
+
+    console.log("document.documentElement.clientWidth", document.documentElement.clientWidth);
+    console.log("document.documentElement.clientHeight", document.documentElement.clientHeight);
+    console.log("ratio width", width);
+    console.log("viewport",viewport);
+    console.log("ratio", window.devicePixelRatio);
+
     // Need to know available canvas dimensions
-    const availableCanvasWidth = window.innerWidth;
-    const availableCanvasHeight = window.innerHeight - this.getTotalHeight(this.scoreboard) - this.getTotalHeight(this.title);
+    const availableCanvasWidth = window.innerWidth * window.devicePixelRatio;
+    const availableCanvasHeight = (window.innerHeight - this.getTotalHeight(this.scoreboard) - this.getTotalHeight(this.title)) * window.devicePixelRatio;
 
     // Scale the game to the smallest dimension
     // 1. Compute the width and height ratios
     const totalLaneWidth = laneWidth + 2 * gutterWidth;
-    const widthRatio = availableCanvasWidth / totalLaneWidth;
-    const heightRatio = availableCanvasHeight / laneHeight;
+    const widthRatio = (availableCanvasWidth / totalLaneWidth);
+    const heightRatio = (availableCanvasHeight / laneHeight);
 
     if (widthRatio < heightRatio) {
       // 2. Set the renderScale to the smaller ratio
@@ -88,11 +101,14 @@ export class Render {
       this.ctx.canvas.width = (numberOfHeightUnits * (laneWidth + 2 * gutterWidth));
     }
 
-    this.ctx.canvas.style.width = this.ctx.canvas.width * 3;
-    this.ctx.canvas.style.height = this.ctx.canvas.height * 3;
+    this.ctx.canvas.style.transform = `scale(${1 / window.devicePixelRatio})`;
+    this.ctx.canvas.style.transformOrigin = 'top left';
 
     // Resize scoreboard to match canvas width
     this.scoreboard.style.width = `${this.ctx.canvas.width}px`;
+    this.scoreboard.style.height = this.scoreboard.style.height * window.devicePixelRatio;
+    this.scoreboard.style.transform = `scale(${1 / window.devicePixelRatio})`;
+    this.scoreboard.style.transformOrigin = 'top left';
 
     console.log(`Render initialization complete. 
     available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
