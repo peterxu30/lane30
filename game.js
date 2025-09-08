@@ -15,7 +15,7 @@
 // - ball trajectory should be affected by pin collisions
 // - disable screen dragging on mobile - DONE
 // - stop pin movement after a while
-// - reset lane when all hit active pins velocity is 0
+// - reset lane when all hit active pins velocity is 
 // - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
 
 // P1
@@ -304,9 +304,9 @@ class Game {
     if (!this.ball.rolling) {
       // TODO(peter.xu) Clean this up
       // This logic controls the ball's horizontal position before it is rolled
-      // This is ok to leave as is
-      const minX = this.lane.x + this.ball.r;
-      const maxX = this.lane.x + this.lane.width - this.ball.r;
+      // Currently bound the ball to always be within the lane. (Cannot throw a gutter ball).
+      const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
+      const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
       const targetX = Math.max(minX, Math.min(maxX, this.mouseX));
       this.ball.x += (targetX - this.ball.x);
 
