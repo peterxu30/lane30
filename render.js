@@ -13,7 +13,7 @@ export class Render {
   static pinFillColor = 'white';
   static pinHitFillColor = 'red';
   static pinStrokeColor = 'red';
-  static pinStrokeWidth = 2;
+  static pinStrokeWidth = 3;
   static scoreboardRollsId = '#rolls';
   static scoreboardTotalsId = '#totals';
   static laneLineColor = 'rgba(0,0,0,0.15)';
@@ -43,7 +43,6 @@ export class Render {
     return element.offsetHeight + this.getTopMargin(element) + this.getBottomMargin(element);
   }
 
-  // TODO(peter.xu) refactor this
   /**
    * initialize resizes the canvas to fit the available screen space and computes the 
    * renderScale, a ratio used to scale all game elements computed from the smallest
@@ -71,35 +70,68 @@ export class Render {
       this.renderScale = widthRatio;
 
       // 3. Set the canvas dimension to the smaller available dimension
-      this.ctx.canvas.width = availableCanvasWidth;
+      this.canvas.width = availableCanvasWidth;
       
       // 4. Scale canvas height based on aspect ratio of lane
       const numberOfWidthUnits = availableCanvasWidth / totalLaneWidth;
-      this.ctx.canvas.height = (numberOfWidthUnits * laneHeight);            
+      this.canvas.height = (numberOfWidthUnits * laneHeight);
     } else {
       // 2. Set the renderScale to the smaller ratio
       this.renderScale = heightRatio;
 
       // 3. Set the canvas dimension to the smaller available dimension
-      this.ctx.canvas.height = availableCanvasHeight;
+      this.canvas.height = availableCanvasHeight;
 
       // 4. Scale canvas width based on aspect ratio of lane
       const numberOfHeightUnits = availableCanvasHeight / laneHeight;
-      this.ctx.canvas.width = (numberOfHeightUnits * (laneWidth + 2 * gutterWidth));
+      this.canvas.width = (numberOfHeightUnits * (laneWidth + 2 * gutterWidth));
     }
 
-    this.ctx.canvas.style.width = this.ctx.canvas.width * 3;
-    this.ctx.canvas.style.height = this.ctx.canvas.height * 3;
+    // scale the canvas to native PPI
+    this.scalePPI(this.canvas, window.devicePixelRatio);
 
     // Resize scoreboard to match canvas width
-    this.scoreboard.style.width = `${this.ctx.canvas.width}px`;
+    this.scoreboard.style.width = `${this.canvas.style.width}px`;
 
     console.log(`Render initialization complete. 
     available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
-    scaled canvas: ${this.ctx.canvas.width}x${this.ctx.canvas.height}, 
+    scaled canvas: ${this.canvas.width}x${this.canvas.height}, 
     renderScale: ${this.renderScale},
     widthRatio: ${widthRatio}, 
-    heightRatio: ${heightRatio}`);
+    heightRatio: ${heightRatio},
+    devicePixelRatio: ${window.devicePixelRatio}`);
+  }
+
+  /**
+   * scalePPI upscales or downscales the canvas to match the native PPI of the device.
+   * The HTML Canvas assumes a default PPI of 96, which results in blurry visuals on
+   * high PPI devices such as mobile phones.
+   * 
+   * The Canvas has two sizes, one of the drawing surface (canvas.width, canvas.height)
+   * and the displayed size on the screen (canvas.style.width, canvas.style.height).
+   * When these sizes are the same, the canvas is natively 96 PPI. In order to increase the PPI,
+   * the canvas drawing surface size must be increased while keeping the canvas display size the same.
+   * 
+   * This fits "more canvas" into the same dimensions.
+   */
+  scalePPI(canvas, scaleFactor) {
+    console.log(`setting PPI with scaleFactor ${scaleFactor}`);
+
+    // Set up CSS size.
+    canvas.style.width = canvas.style.width || canvas.width + 'px';
+    canvas.style.height = canvas.style.height || canvas.height + 'px';
+
+    // Get size information.
+    var width = parseFloat(canvas.style.width);
+    var height = parseFloat(canvas.style.height);
+
+    // Resize the canvas.
+    canvas.width = Math.ceil(width * scaleFactor);
+    canvas.height = Math.ceil(height * scaleFactor);
+
+    // Redraw the canvas image and scale future draws.
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
   }
 
   drawLane(lane) {
@@ -107,7 +139,7 @@ export class Render {
     const laneWidth = lane.width * this.renderScale;
     const laneHeight = lane.height * this.renderScale;
     const laneGutterWidth = lane.gutterWidth * this.renderScale;
-    const laneX = (this.ctx.canvas.width - laneWidth)/2;
+    const laneX = (parseInt(this.canvas.style.width, 10) - laneWidth)/2;
     const laneY = 0;
 
     // lane
@@ -227,6 +259,14 @@ export class Render {
     });
   }
 
+  #getCanvasWidth() {
+    return parseInt(this.canvas.style.width, 10);
+  }
+
+  #getCanvasHeight() {
+    return parseInt(this.canvas.style.height, 10);
+  }
+
   writeGameNotStartedText() {
     const gameNotStartedTitle = "30th Anniversary Edition";
     const gameNotStartedSubtitle = "Drag ball left and right to aim";
@@ -241,8 +281,8 @@ export class Render {
     const adjustedSubtitleFontSize = defaultSubtitleFontSize * this.renderScale;
 
     this.ctx.font = `bold ${adjustedTitleFontSize}px Arial`;
-    const textX = (this.ctx.canvas.width)/2;
-    const textY = this.ctx.canvas.height/2.5;
+    const textX = this.#getCanvasWidth() / 2;
+    const textY = this.#getCanvasHeight() / 2.5;
     this.ctx.fillText(gameNotStartedTitle, textX, textY); 
 
     const textMetrics = this.ctx.measureText(gameNotStartedSubtitle);
@@ -268,8 +308,8 @@ export class Render {
     const adjustedSubtitleFontSize = defaultSubtitleFontSize * this.renderScale;
 
     this.ctx.font = `bold ${adjustedTitleFontSize}px Arial`;    
-    const textX = (this.ctx.canvas.width)/2;
-    const textY = this.ctx.canvas.height/2.5;
+    const textX = this.#getCanvasWidth() / 2;
+    const textY = this.#getCanvasHeight() / 2.5;
     this.ctx.fillText(Render.gameOverTitle, textX, textY); 
 
     const textMetrics = this.ctx.measureText(Render.gameOverSubtitle);
