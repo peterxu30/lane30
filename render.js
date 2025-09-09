@@ -118,8 +118,8 @@ export class Render {
     console.log(`setting PPI with scaleFactor ${scaleFactor}`);
 
     // Set up CSS size.
-    canvas.style.width = canvas.style.width || canvas.width + 'px';
-    canvas.style.height = canvas.style.height || canvas.height + 'px';
+    canvas.style.width = canvas.width + 'px';
+    canvas.style.height = canvas.height + 'px';
 
     // Get size information.
     var width = parseFloat(canvas.style.width);
