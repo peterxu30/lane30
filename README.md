@@ -3,7 +3,7 @@
 # About
 This is a simple bowling game built to commemorate my 30th birthday. Don't tell anyone yet because it's still a secret.
 
-Vibe-coded by ChatGPT, heavily upgraded, refactored, and bug-fixed by PKING.
+Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 
 # Features
 - Simple collision physics: Ball hits one way, pins go the other. Pins naturally decelerate.
