@@ -8,6 +8,11 @@
 // - stop pin movement after a while
 // - reset lane when all hit active pins velocity is 
 // - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
+// - Print on screen the actual available canvas dimensions on physical iPhone because Chrome URL bar eats into available screen space
+// - Add new GameState for BallReturn when ball has left the top of the screen to display "Tap to get ball back"
+//     - this will be game state to display nice job message 
+// - Add new GameState for pins done moving - will also automatically update score
+// - FIXED TICK RATE RESULTS IN LAGGY GAME PLAY - maybe have to revert it if can't fix it. made for phones anyway. Or make change so that it's only activated if device refresh rate is > 60
 
 
 // P1
@@ -374,9 +379,9 @@ class Game {
 
     self = this;
     function runHelper(timestamp) {
-      if (self.ticker.tick(timestamp)) {
-        self.engine.update(self.ball, self.pins, self.lane);
-      }
+      // if (self.ticker.tick(timestamp)) {
+      self.engine.update(self.ball, self.pins, self.lane);
+      // }
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
       window.requestAnimationFrame(runHelper); // recursive call
     }
