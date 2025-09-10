@@ -11,7 +11,7 @@ Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 - First time user education (FTUX): Simple instructions on how to play.
 - Dynamic screen scaling: The game maintains the same aspect ratio regardless of device dimensions.
 - Dynamic resolution scaling: The game maintains the same visual fidelity (PPI) regardless of device resolution.
-- Fixed refresh rate: The game maintains the a constant tick rate regardless of device refresh rate.
+- Fixed refresh rate: The game maintains a constant tick rate regardless of device refresh rate.
 
 # Testing
 
