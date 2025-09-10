@@ -375,9 +375,9 @@ class Game {
     self = this;
     function runHelper(timestamp) {
       if (self.ticker.tick(timestamp)) {
-      self.engine.update(self.ball, self.pins, self.lane);
-      self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
+        self.engine.update(self.ball, self.pins, self.lane);
       }
+      self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
       window.requestAnimationFrame(runHelper); // recursive call
     }
     window.requestAnimationFrame(runHelper);
