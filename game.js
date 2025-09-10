@@ -1,32 +1,35 @@
 // TODO 
 // P0
-// - flip orientation of pins - DONE
-// - fix window sizing issue (need to fit everything to screen) - DONE
-// - allow ball to move left right before release, do not let ball be controlled post release - DONE
 // - control the ball via drag instead of click
-// - need way of ending/starting new game after tenth frame - WIP
-// - add text to tap to rerack/ball return - DONE
 // - score should automatically update
-// - need to fix score calculation for 10th frame - DONE
-// - need to fix scoreboard on closed tenth frame - DONE
 // - need a flashy title graphic - "Lane 30 by PKING"
-// - pop on text explaining how to play + description, thank yous etc. - DONE
 // - clean up abstractions
 // - ball trajectory should be affected by pin collisions
-// - disable screen dragging on mobile - DONE
 // - stop pin movement after a while
 // - reset lane when all hit active pins velocity is 
 // - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
-// - restrict game refresh rate to 60hz
+
 
 // P1
 // - hook mode - where you can control the ball as it moves
 // - auto reset the ball after it leaves the lane instead of requiring user to click
-// - about section with blurb + "Vibe coded by ChatGPT, fixed by PKING."
 
-import { GameStates, RenderStates, GameStateToRenderState } from './constants.js';
+// DONE
+// - flip orientation of pins - DONE
+// - fix window sizing issue (need to fit everything to screen) - DONE
+// - allow ball to move left right before release, do not let ball be controlled post release - DONE
+// - need way of ending/starting new game after tenth frame - DONE
+// - add text to tap to rerack/ball return - DONE
+// - need to fix score calculation for 10th frame - DONE
+// - need to fix scoreboard on closed tenth frame - DONE
+// - pop on text explaining how to play + description, thank yous etc. - DONE
+// - disable screen dragging on mobile - DONE
+// - restrict game refresh rate to 60hz - DONE
+
+import { GameStates } from './constants.js';
 import { Engine } from './engine.js';
 import { Render } from './render.js';
+import { Ticker } from './ticker.js';
 
 /**
  * Game represents the entire bowling game. It contains the core game loop, state, and logic.
@@ -106,8 +109,11 @@ class Game {
     const rect = this.canvas.getBoundingClientRect();
     this.mouseX = rect.right - rect.left / 2;
 
-    // testing
+    // initial game state
     this.gameState = GameStates.NOT_STARTED;
+
+    // responsible for maintaining a fixed refresh rate
+    this.ticker = new Ticker(60);
   }
 
   #getLaneCenterX(laneStartingX, laneWidth, gutterWidth) {
@@ -363,64 +369,15 @@ class Game {
     
   }
 
-  // var stop = false;
-  // var frameCount = 0;
-  // var $results = $("#results");
-  // var fps, fpsInterval, startTime, now, then, elapsed;
-
-  // startAnimating(60);
-
-  // function startAnimating(fps) {
-  //     fpsInterval = 1000 / fps;
-  //     then = window.performance.now();
-  //     startTime = then;
-  //     console.log(startTime);
-  //     animate();
-  // }
-
-
-  // function animate(newtime) {
-
-  //     // // stop
-  //     // if (stop) {
-  //     //     return;
-  //     // }
-
-  //     // request another frame
-
-  //     requestAnimationFrame(animate);
-
-  //     // calc elapsed time since last loop
-
-  //     now = newtime;
-  //     elapsed = now - then;
-
-  //     // if enough time has elapsed, draw the next frame
-
-  //     if (elapsed > fpsInterval) {
-
-  //         // Get ready for next frame by setting then=now, but...
-  //         // Also, adjust for fpsInterval not being multiple of 16.67
-  //         then = now - (elapsed % fpsInterval);
-
-  //         // draw stuff here
-
-
-  //         // TESTING...Report #seconds since start and achieved fps.
-  //         var sinceStart = now - startTime;
-  //         var currentFps = Math.round(1000 / (sinceStart / ++frameCount) * 100) / 100;
-  //         $results.text("Elapsed time= " + Math.round(sinceStart / 1000 * 100) / 100 + " secs @ " + currentFps + " fps.");
-
-  //     }
-  // }
-
   run() {    
     this.initialize();
 
     self = this;
-    function runHelper() {
+    function runHelper(timestamp) {
+      if (self.ticker.tick(timestamp)) {
       self.engine.update(self.ball, self.pins, self.lane);
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
+      }
       window.requestAnimationFrame(runHelper); // recursive call
     }
     window.requestAnimationFrame(runHelper);
