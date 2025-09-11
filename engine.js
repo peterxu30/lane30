@@ -1,9 +1,14 @@
 /**
  * Engine handles all physics calculations and game state updates.
  * It manages ball movement, pin physics, and collision detection.
+ * It is designed to theoretically run at 60hz and adjusts for variation in refresh rate.
  */
 export class Engine {
-  update(ball, pins, lane) {
+  static theoreticalTickInterval = 1000 / 60; // time interval of 60hz
+
+  update(ball, pins, lane, actualTickInterval) {
+    const tickModifierRatio = actualTickInterval / Engine.theoreticalTickInterval;
+
     // Ball movement
     if (ball.rolling) {
       // disable mouse control for now
@@ -13,19 +18,19 @@ export class Engine {
       //   const targetX = Math.max(minX, Math.min(maxX, mouseX));
       //   ball.x += (targetX - ball.x) * 0.18;
       // }
-      ball.y += ball.vy;
+      ball.y += ball.vy * tickModifierRatio;
     }
 
     // Ball–pin collisions
     pins.forEach(p => {
-      if (p.active) this.resolveCollision(ball, p);
+      if (p.active) this.resolveCollision(ball, p, tickModifierRatio);
     });
 
     // Pin–pin collisions
     for (let i = 0; i < pins.length; i++) {
       for (let j = i + 1; j < pins.length; j++) {
         if (pins[i].active && pins[j].active) {
-          this.resolveCollision(pins[i], pins[j]);
+          this.resolveCollision(pins[i], pins[j], tickModifierRatio);
         }
       }
     }
@@ -33,16 +38,18 @@ export class Engine {
     // TODO(peter.xu) Maybe bring horizontal ball movement back
     // if (ball.rolling) {
     //   ball.x += ball.vx;
-    //   ball.vx *= 0.98;
+    //   ball.vx *= 1 - (0.02 * tickModifierRatio);
     // }
 
     // Move pins
     pins.forEach(p => {
       if (!p.active) return;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vx *= 0.99;
-      p.vy *= 0.99;
+      p.x += p.vx * tickModifierRatio;
+      p.y += p.vy * tickModifierRatio;
+
+      const tickAcceleration = 1 - (0.01 * tickModifierRatio);
+      p.vx *= tickAcceleration;
+      p.vy *= tickAcceleration;
 
       // testing stopping the pins
       // var beforeVx = p.vx;
@@ -64,7 +71,7 @@ export class Engine {
     });
   }
 
-  resolveCollision(a, b) {
+  resolveCollision(a, b, tickModifierRatio) {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const dist = Math.hypot(dx, dy);
@@ -73,10 +80,13 @@ export class Engine {
     if (overlap > 0) {
       const nx = dx / dist;
       const ny = dy / dist;
-      a.x -= nx * overlap / 2;
-      a.y -= ny * overlap / 2;
-      b.x += nx * overlap / 2;
-      b.y += ny * overlap / 2;
+      const changeX = tickModifierRatio * (nx * overlap / 2);
+      const changeY = tickModifierRatio * (ny * overlap / 2);
+      a.x -= changeX;
+      a.y -= changeY;
+      b.x += changeX;
+      b.y += changeY;
+
       const rvx = b.vx - a.vx;
       const rvy = b.vy - a.vy;
       const velAlongNormal = rvx * nx + rvy * ny;
@@ -87,10 +97,11 @@ export class Engine {
       const j = -(1 + restitution) * velAlongNormal / (invMassA + invMassB);
       const ix = j * nx;
       const iy = j * ny;
-      a.vx -= ix * invMassA;
-      a.vy -= iy * invMassA;
-      b.vx += ix * invMassB;
-      b.vy += iy * invMassB;
+      
+      a.vx -= tickModifierRatio * (ix * invMassA);
+      a.vy -= tickModifierRatio * (iy * invMassA);
+      b.vx += tickModifierRatio * (ix * invMassB);
+      b.vy += tickModifierRatio * (iy * invMassB);
 
       if ("hit" in b) {
         b.hit = true;

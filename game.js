@@ -29,7 +29,7 @@
 // - need to fix scoreboard on closed tenth frame - DONE
 // - pop on text explaining how to play + description, thank yous etc. - DONE
 // - disable screen dragging on mobile - DONE
-// - restrict game refresh rate to 60hz - DONE
+// - restrict game engine refresh rate to 60hz - DONE
 
 import { GameStates } from './constants.js';
 import { Engine } from './engine.js';
@@ -379,9 +379,7 @@ class Game {
 
     self = this;
     function runHelper(timestamp) {
-      // if (self.ticker.tick(timestamp)) {
-      self.engine.update(self.ball, self.pins, self.lane);
-      // }
+      self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
       window.requestAnimationFrame(runHelper); // recursive call
     }
