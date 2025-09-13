@@ -1,40 +1,26 @@
-// TODO 
-// P0
-// - control the ball via drag instead of click
-// - score should automatically update
-// - need a flashy title graphic - "Lane 30 by PKING"
-// - clean up abstractions
-// - ball trajectory should be affected by pin collisions
-// - stop pin movement after a while
-// - reset lane when all hit active pins velocity is 
-// - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
-// - Print on screen the actual available canvas dimensions on physical iPhone because Chrome URL bar eats into available screen space
-// - Add new GameState for BallReturn when ball has left the top of the screen to display "Tap to get ball back"
-//     - this will be game state to display nice job message 
-// - Add new GameState for pins done moving - will also automatically update score
-// - FIXED TICK RATE RESULTS IN LAGGY GAME PLAY - maybe have to revert it if can't fix it. made for phones anyway. Or make change so that it's only activated if device refresh rate is > 60
-
-
-// P1
-// - hook mode - where you can control the ball as it moves
-// - auto reset the ball after it leaves the lane instead of requiring user to click
-
-// DONE
-// - flip orientation of pins - DONE
-// - fix window sizing issue (need to fit everything to screen) - DONE
-// - allow ball to move left right before release, do not let ball be controlled post release - DONE
-// - need way of ending/starting new game after tenth frame - DONE
-// - add text to tap to rerack/ball return - DONE
-// - need to fix score calculation for 10th frame - DONE
-// - need to fix scoreboard on closed tenth frame - DONE
-// - pop on text explaining how to play + description, thank yous etc. - DONE
-// - disable screen dragging on mobile - DONE
-// - restrict game engine refresh rate to 60hz - DONE
-
 import { GameStates } from './constants.js';
 import { Engine } from './engine.js';
 import { Render } from './render.js';
 import { Ticker } from './ticker.js';
+
+// Lane constants
+const laneWidth = 350;
+const laneHeight = 683;
+const gutterWidth = 20;
+
+// Ball constants
+const ballSpeed = -8.4;
+const ballRadius = 25;
+const ballMass = 6.5;
+const ballStartingYBuffer = 60; // distance from bottom of lane to ball starting position
+
+// Pin constants
+const pinRadius = 14;
+const pinMass = 2;
+const numPinRows = 4;
+const pinSpacingX = 90; // horizontal spacing between pins
+const pinSpacingY = 50; // vertical spacing between rows
+const pinBaseYBuffer = 20; // distance from top of lane to first row of pins
 
 /**
  * Game represents the entire bowling game. It contains the core game loop, state, and logic.
@@ -47,29 +33,6 @@ import { Ticker } from './ticker.js';
  * Game physics is handled independently of screen size for consistency.
  */
 class Game {
-  // Game constants represent the bowling lane separate from the UI. 
-  // Because physics is computed in pixels, scaling the game to different screen sizes will affect physics.
-  // Instead, we will keep the game dimensions constant and scale the UI in the Render class.
-
-  // Lane constants
-  static laneWidth = 350;
-  static laneHeight = 683;
-  static gutterWidth = 20;
-
-  // Ball constants
-  static ballSpeed = -8.4;
-  static ballRadius = 25;
-  static ballMass = 6.5;
-  static ballStartingYBuffer = 60; // distance from bottom of lane to ball starting position
-
-  // Pin constants
-  static pinRadius = 14;
-  static pinMass = 2;
-  static numPinRows = 4;
-  static pinSpacingX = 90; // horizontal spacing between pins
-  static pinSpacingY = 50; // vertical spacing between rows
-  static pinBaseYBuffer = 20; // distance from top of lane to first row of pins
-
   constructor() {
     // HTML Components
     this.title = document.getElementById('title');
@@ -79,6 +42,7 @@ class Game {
     // Core components
     this.engine = new Engine();
     this.render = new Render(this.title, this.scoreboard, this.canvas);
+    this.ticker = new Ticker(60); // responsible for maintaining a fixed refresh rate
 
     // Game objects
     this.initialized = false;
@@ -90,21 +54,21 @@ class Game {
     this.lane = {
       x: 0,
       y: 0,
-      width: Game.laneWidth,
-      height: Game.laneHeight,
-      gutterWidth: Game.gutterWidth,
+      width: laneWidth,
+      height: laneHeight,
+      gutterWidth: gutterWidth,
     };
 
-    const startingY = this.lane.y + this.lane.height - Game.ballStartingYBuffer;
+    const startingY = this.lane.y + this.lane.height - ballStartingYBuffer;
     this.ball = {
       x: this.#getLaneCenterX(this.lane.x, this.lane.width, this.lane.gutterWidth), // start in middle of lane horizontally
       y: startingY, // start at beginning of lane vertically
       startingX: this.#getLaneCenterX(this.lane.x, this.lane.width, this.lane.gutterWidth), // reset X position
       startingY: startingY, // reset Y position
-      r: Game.ballRadius,
+      r: ballRadius,
       vx: 0,
-      vy: Game.ballSpeed,
-      mass: Game.ballMass,
+      vy: ballSpeed,
+      mass: ballMass,
       rolling: false
     };
 
@@ -116,15 +80,13 @@ class Game {
 
     // initial game state
     this.gameState = GameStates.NOT_STARTED;
-
-    // responsible for maintaining a fixed refresh rate
-    this.ticker = new Ticker(60);
   }
 
   #getLaneCenterX(laneStartingX, laneWidth, gutterWidth) {
     return laneStartingX + (laneWidth + 2 * gutterWidth) / 2;
   }
 
+  // TODO(peter.xu) Add is spare/strike
   buildFrames() {
     return Array(10).fill(null).map(() => ({
       roll1: null,
@@ -137,22 +99,22 @@ class Game {
 
   // Game methods
   buildPins() {
-    const baseY = this.lane.y - Game.pinBaseYBuffer;
+    const baseY = this.lane.y - pinBaseYBuffer;
     const centerX = this.#getLaneCenterX(this.lane.x, this.lane.width, this.lane.gutterWidth);
     const pins = [];
     let id = 0;
-    for (let r = 0; r < Game.numPinRows; r++) {
+    for (let r = 0; r < numPinRows; r++) {
       const cols = r + 1;
-      const rowWidth = (cols - 1) * Game.pinSpacingX;
+      const rowWidth = (cols - 1) * pinSpacingX;
       for (let c = 0; c < cols; c++) {
-        const x = centerX - rowWidth / 2 + c * Game.pinSpacingX;
-        const y = baseY + (Game.numPinRows - r) * Game.pinSpacingY;
+        const x = centerX - rowWidth / 2 + c * pinSpacingX;
+        const y = baseY + (numPinRows - r) * pinSpacingY;
         pins.push({
           id: ++id,
           x, y,
-          r: Game.pinRadius,
+          r: pinRadius,
           vx: 0, vy: 0,
-          mass: Game.pinMass,
+          mass: pinMass,
           active: true,
           hit: false
         });
@@ -161,7 +123,7 @@ class Game {
     return pins;
   }
 
-  resetGame() {
+  resetLane() {
     this.pins = this.buildPins();
     this.resetBall();
   }
@@ -170,7 +132,7 @@ class Game {
     this.ball.x = this.ball.startingX;
     this.ball.y = this.ball.startingY;
     this.ball.vx = 0;
-    this.ball.vy = Game.ballSpeed;
+    this.ball.vy = ballSpeed;
     this.ball.rolling = false;
   }
 
@@ -183,6 +145,7 @@ class Game {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
   }
 
+  // TODO(peter.xu) replace X and / with numbers, that is rendering logic
   handleRoll() {
     const pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
     this.pins.forEach(p => { (p.hit) ? p.scored = true : p.scored = false; });
@@ -353,11 +316,11 @@ class Game {
             this.frames = this.buildFrames();
             this.currentFrame = 0;
             this.rollInFrame = 0;
-            this.resetGame();
+            this.resetLane();
             this.gameState = GameStates.RUNNING;
           }
         } else {
-          this.resetGame(); // really should be renamed rerack
+          this.resetLane(); // really should be renamed rerack
         }
       }
     }

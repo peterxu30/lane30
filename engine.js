@@ -1,13 +1,15 @@
+// time interval of 60hz
+const theoreticalTickInterval = 1000 / 60; 
+
 /**
  * Engine handles all physics calculations and game state updates.
  * It manages ball movement, pin physics, and collision detection.
  * It is designed to theoretically run at 60hz and adjusts for variation in refresh rate.
  */
 export class Engine {
-  static theoreticalTickInterval = 1000 / 60; // time interval of 60hz
 
   update(ball, pins, lane, actualTickInterval) {
-    const tickModifierRatio = actualTickInterval / Engine.theoreticalTickInterval;
+    const tickModifierRatio = actualTickInterval / theoreticalTickInterval;
 
     // Ball movement
     if (ball.rolling) {
