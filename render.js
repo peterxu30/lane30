@@ -1,4 +1,60 @@
-import { GameStates, RenderStates, GameStateToRenderState } from './constants.js';
+import { GameStates } from './constants.js';
+
+/**
+ * RenderStates represents the possible states of the render.
+ */
+const RenderStates = Object.freeze({
+  NOT_STARTED: Symbol("not_started"),
+  RUNNING: Symbol("running"),
+  OVER: Symbol("over")
+});
+
+/**
+ * GameStateToRenderState maps the game state to the render state.
+ */
+const gameStateToRenderState = {
+  [GameStates.NOT_STARTED]: RenderStates.NOT_STARTED,
+  [GameStates.RUNNING]: RenderStates.RUNNING,
+  [GameStates.OVER]: RenderStates.OVER,
+  [GameStates.RESTART]: RenderStates.OVER
+};
+
+// Scoreboard HTML elements
+const scoreboardRollsId = '#rolls';
+const scoreboardTotalsId = '#totals';
+
+// Lane rendering
+const numBoards = 39;
+const laneFillColor = '#c49a6c';
+const gutterFillColor = '#555';
+const laneLineColor = 'rgba(0,0,0,0.15)';
+const laneLineWidth = 1;
+
+// Ball rendering
+const ballFillColor = '#4760ff';
+
+// Pin rendering
+const pinFillColor = 'white';
+const pinHitFillColor = 'red';
+const pinStrokeColor = 'red';
+const pinStrokeWidth = 3;
+
+// Copy
+const gameOverTitle = "NICE GAME";
+const gameOverSubtitle = "Tap to start new game";
+const gameNotStartedTitle = "PKING 30th Anniversary Edition";
+const gameNotStartedSubtitle = "Drag ball left and right to aim";
+const gameNotStartedSecondSubtitle = "Tap to return ball";
+
+// Copy font sizes
+const gameNotStartedTitleFontSize = 22;
+const gameNotStartedSubtitleFontSize = 18;
+const gameOverTitleFontSize = 49;
+const gameOverSubtitleFontSize = 18;
+
+// Copy font style and type
+const fontStyle = "bold";
+const fontType = "Arial";
 
 /**
  * Render handles all drawing and UI scaling. The game automatically scales to fit
@@ -6,19 +62,6 @@ import { GameStates, RenderStates, GameStateToRenderState } from './constants.js
  * Game physics is handled independently of screen size for consistency.
  */
 export class Render {
-  static numBoards = 39;
-  static laneFillColor = '#c49a6c';
-  static gutterFillColor = '#555';
-  static ballFillColor = '#4760ff';
-  static pinFillColor = 'white';
-  static pinHitFillColor = 'red';
-  static pinStrokeColor = 'red';
-  static pinStrokeWidth = 3;
-  static scoreboardRollsId = '#rolls';
-  static scoreboardTotalsId = '#totals';
-  static laneLineColor = 'rgba(0,0,0,0.15)';
-  static laneLineWidth = 1;
-
   constructor(title, scoreboard, canvas) {
     this.title = title;
     this.scoreboard = scoreboard;
@@ -143,14 +186,14 @@ export class Render {
     const laneY = 0;
 
     // lane
-    this.ctx.fillStyle = Render.laneFillColor;
+    this.ctx.fillStyle = laneFillColor;
     this.ctx.fillRect(laneX, laneY, laneWidth, laneHeight);
 
     // lane boards
-    const boardWidth = laneWidth / Render.numBoards;
-    this.ctx.strokeStyle = Render.laneLineColor;
-    this.ctx.lineWidth = Render.laneLineWidth;
-    for (let i = 1; i < Render.numBoards; i++) {
+    const boardWidth = laneWidth / numBoards;
+    this.ctx.strokeStyle = laneLineColor;
+    this.ctx.lineWidth = laneLineWidth;
+    for (let i = 1; i < numBoards; i++) {
       const x = laneX + i * boardWidth;
       this.ctx.beginPath();
       this.ctx.moveTo(x, laneY);
@@ -159,7 +202,7 @@ export class Render {
     }
 
     // gutters
-    this.ctx.fillStyle = Render.gutterFillColor;
+    this.ctx.fillStyle = gutterFillColor;
     this.ctx.fillRect(laneX - laneGutterWidth, laneY, laneGutterWidth, laneHeight);
     this.ctx.fillRect(laneX + laneWidth, laneY, laneGutterWidth, laneHeight);
 
@@ -200,7 +243,7 @@ export class Render {
     const ballY = ball.y * this.renderScale;
     const ballR = ball.r * this.renderScale;
 
-    this.ctx.fillStyle = Render.ballFillColor;
+    this.ctx.fillStyle = ballFillColor;
     this.ctx.beginPath();
     this.ctx.arc(ballX, ballY, ballR, 0, Math.PI * 2);
     this.ctx.fill();
@@ -214,19 +257,19 @@ export class Render {
       const pinY = p.y * this.renderScale;
       const pinR = p.r * this.renderScale;
 
-      this.ctx.fillStyle = p.hit ? Render.pinHitFillColor : Render.pinFillColor;
+      this.ctx.fillStyle = p.hit ? pinHitFillColor : pinFillColor;
       this.ctx.beginPath();
       this.ctx.arc(pinX, pinY, pinR, 0, Math.PI * 2);
       this.ctx.fill();
-      this.ctx.strokeStyle = Render.pinStrokeColor;
-      this.ctx.lineWidth = Render.pinStrokeWidth;
+      this.ctx.strokeStyle = pinStrokeColor;
+      this.ctx.lineWidth = pinStrokeWidth;
       this.ctx.stroke();
     });
   }
 
   updateScoreboard(frames) {
-    const rollRow = this.scoreboard.querySelector(Render.scoreboardRollsId);
-    const totalRow = this.scoreboard.querySelector(Render.scoreboardTotalsId);
+    const rollRow = this.scoreboard.querySelector(scoreboardRollsId);
+    const totalRow = this.scoreboard.querySelector(scoreboardTotalsId);
     
     for (let i = 0; i < 10; i++) {
       const f = frames[i];
@@ -268,59 +311,47 @@ export class Render {
   }
 
   writeGameNotStartedText() {
-    const gameNotStartedTitle = "30th Anniversary Edition";
-    const gameNotStartedSubtitle = "Drag ball left and right to aim";
-    const gameNotStartedSecondSubtitle = "Tap to return ball";
-
     this.ctx.textAlign = 'center';
 
-    const defaultTitleFontSize = 27;
-    const defaultSubtitleFontSize = 18;
+    const adjustedTitleFontSize = gameNotStartedTitleFontSize * this.renderScale;
+    const adjustedSubtitleFontSize = gameNotStartedSubtitleFontSize * this.renderScale;
 
-    const adjustedTitleFontSize = defaultTitleFontSize * this.renderScale;
-    const adjustedSubtitleFontSize = defaultSubtitleFontSize * this.renderScale;
-
-    this.ctx.font = `bold ${adjustedTitleFontSize}px Arial`;
+    this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
     this.ctx.fillText(gameNotStartedTitle, textX, textY); 
 
     const textMetrics = this.ctx.measureText(gameNotStartedSubtitle);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-    this.ctx.font = `bold ${adjustedSubtitleFontSize}px Arial`;
+    this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight * 1.7;
     this.ctx.fillText(gameNotStartedSubtitle, textX, subtextY); 
 
-    this.ctx.font = `bold ${adjustedSubtitleFontSize}px Arial`;
+    this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtext2Y = textY + textHeight * 3.4;
     this.ctx.fillText(gameNotStartedSecondSubtitle, textX, subtext2Y); 
   }
 
-  static gameOverTitle = "NICE GAME";
-  static gameOverSubtitle = "Tap to start new game";
   writeGameOverText() {
     this.ctx.textAlign = 'center';
 
-    const defaultTitleFontSize = 49;
-    const defaultSubtitleFontSize = 18;
+    const adjustedTitleFontSize = gameOverTitleFontSize * this.renderScale;
+    const adjustedSubtitleFontSize = gameOverSubtitleFontSize * this.renderScale;
 
-    const adjustedTitleFontSize = defaultTitleFontSize * this.renderScale;
-    const adjustedSubtitleFontSize = defaultSubtitleFontSize * this.renderScale;
-
-    this.ctx.font = `bold ${adjustedTitleFontSize}px Arial`;    
+    this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;    
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(Render.gameOverTitle, textX, textY); 
+    this.ctx.fillText(gameOverTitle, textX, textY); 
 
-    const textMetrics = this.ctx.measureText(Render.gameOverSubtitle);
+    const textMetrics = this.ctx.measureText(gameOverSubtitle);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
-    this.ctx.font = `bold ${adjustedSubtitleFontSize}px Arial`;
+    this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight;
-    this.ctx.fillText(Render.gameOverSubtitle, textX, subtextY); 
+    this.ctx.fillText(gameOverSubtitle, textX, subtextY); 
   }
 
   writeTextForGameState(gameState) {
-    switch (GameStateToRenderState[gameState]) {
+    switch (gameStateToRenderState[gameState]) {
       case RenderStates.NOT_STARTED:
         this.writeGameNotStartedText();
         break;
