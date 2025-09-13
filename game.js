@@ -2,6 +2,7 @@ import { GameStates } from './constants.js';
 import { Engine } from './engine.js';
 import { Render } from './render.js';
 import { Ticker } from './ticker.js';
+import * as util from './util.js';
 
 // Lane constants
 const laneWidth = 350;
@@ -153,14 +154,13 @@ class Game {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
   }
 
-  // TODO(peter.xu) replace X and / with numbers, that is rendering logic
+  // TODO(peter.xu) Refactor this
   handleRoll() {
     const pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
     this.pins.forEach(p => { (p.hit) ? p.scored = true : p.scored = false; });
 
     const frame = this.frames[this.currentFrame];
 
-    // TODO(peter.xu) Is this hacky?
     if (this.currentFrame >= 10) {
       return;
     }
@@ -168,39 +168,38 @@ class Game {
     // 10th frame special logic
     if (this.currentFrame === 9) {
       if (this.rollInFrame === 0) {
-        frame.roll1 = pinsHit === 10 ? 'X' : pinsHit;
+        frame.roll1 = pinsHit;
         this.rollInFrame = 1;
       } else if (this.rollInFrame === 1) {
-        if (frame.roll1 !== 'X' && (frame.roll1 + pinsHit === 10)) {
-          frame.roll2 = '/';
+        if (!util.frameIsStrike(frame) && (frame.roll1 + pinsHit === 10)) {
+          frame.roll2 = 10 - frame.roll1; // spare
         } else {
-          frame.roll2 = pinsHit === 10 ? 'X' : pinsHit;
+          frame.roll2 = pinsHit;
         }
 
-        if (frame.roll1 === 'X' || frame.roll2 === '/') {
+        if (util.frameIsStrike(frame) || util.frameIsSpare(frame)) {
           this.rollInFrame = 2;
         } else {
           this.currentFrame++;
-          this.rollInFrame = 5; // wrong, using filler value 
+          this.rollInFrame = 5; // filler value
         }
       } else if (this.rollInFrame === 2) {
-        frame.roll3 = pinsHit === 10 ? 'X' : pinsHit;
-        this.currentFrame++; // TODO(peter.xu) This is wrong. Game over logic
-        this.rollInFrame = 5; // wrong, using filler value
+        frame.roll3 = pinsHit;
+        this.currentFrame++;
+        this.rollInFrame = 5; // filler value
       }
     } else {
       // Frames 1-9
       if (this.rollInFrame === 0) {
-        frame.roll1 = pinsHit === 10 ? 'X' : pinsHit;
-        if (pinsHit === 10) {
-          frame.roll2 = '';
+        frame.roll1 = pinsHit;
+        if (util.frameIsStrike(frame)) {
           this.currentFrame++;
         } else {
           this.rollInFrame = 1;
         }
       } else {
-        if (frame.roll1 !== 'X' && (frame.roll1 + pinsHit === 10)) {
-          frame.roll2 = '/';
+        if (!util.frameIsStrike(frame) && (frame.roll1 + pinsHit === 10)) {
+          frame.roll2 = 10 - frame.roll1; // spare
         } else {
           frame.roll2 = pinsHit;
         }
@@ -221,20 +220,18 @@ class Game {
       let frameScore = 0;
 
       if (i < 9) {
-        if (f.roll1 === 'X') {
+        if (util.frameIsStrike(f)) {
           frameScore = 10 + this.strikeBonus(i);
-        } else if (f.roll2 === '/') {
+        } else if (util.frameIsSpare(f)) {
           frameScore = 10 + this.spareBonus(i);
         } else {
           frameScore = (f.roll1 || 0) + (f.roll2 || 0);
         }
       } else {
-        const r1 = f.roll1 === 'X' ? 10 : f.roll1;
-        let r2 = 0;
-        if (f.roll2 === '/') r2 = 10 - r1;
-        else r2 = f.roll2 === 'X' ? 10 : f.roll2 || 0;
-        const r3 = f.roll3 === 'X' ? 10 : f.roll3 || 0;
-        frameScore = r1 + r2 + (f.roll3 != null ? r3 : 0);
+        const r1 = f.roll1 || 0;
+        const r2 = f.roll2 || 0;
+        const r3 = f.roll3 || 0;
+        frameScore = r1 + r2 + r3;
       }
 
       cumulative += frameScore;
@@ -246,18 +243,18 @@ class Game {
     const nextFrame = this.frames[frameIndex + 1];
     if (!nextFrame) return 0;
 
-    let bonus = 0;      
-    if (nextFrame.roll1 === 'X') { 
+    let bonus = 0;
+    if (util.frameIsStrike(nextFrame)) {
       bonus += 10;
 
       if (frameIndex === this.frames.length - 2) {
-        bonus += nextFrame.roll2 === 'X' ? 10 : nextFrame.roll2 || 0;
+        bonus += nextFrame.roll2 || 0;
       } else {
         const nextNext = this.frames[frameIndex + 2];
-        bonus += nextNext ? (nextNext.roll1 === 'X' ? 10 : nextNext.roll1 || 0) : 0;
+        bonus += nextNext ? (nextNext.roll1 || 0) : 0;
       }
     } else {
-      bonus += (nextFrame.roll1 || 0) + (nextFrame.roll2 === '/' ? (10 - nextFrame.roll1) : nextFrame.roll2 || 0);
+      bonus += (nextFrame.roll1 || 0) + (nextFrame.roll2 || 0);
     }
     return bonus;
   }
@@ -265,7 +262,7 @@ class Game {
   spareBonus(frameIndex) {
     const nextFrame = this.frames[frameIndex + 1];
     if (!nextFrame) return 0;
-    return nextFrame.roll1 === 'X' ? 10 : nextFrame.roll1 || 0;
+    return nextFrame.roll1 || 0;
   }
 
   initialize() {

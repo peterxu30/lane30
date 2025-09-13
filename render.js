@@ -1,4 +1,5 @@
 import { GameStates } from './constants.js';
+import * as util from './util.js';
 
 /**
  * RenderStates represents the possible states of the render.
@@ -45,6 +46,8 @@ const gameOverSubtitle = "Tap to start new game";
 const gameNotStartedTitle = "PKING 30th Anniversary Edition";
 const gameNotStartedSubtitle = "Drag ball left and right to aim";
 const gameNotStartedSecondSubtitle = "Tap to return ball";
+const scoreboardStrike = 'X';
+const scoreboardSpare = '/';
 
 // Copy font sizes
 const gameNotStartedTitleFontSize = 21.7;
@@ -278,11 +281,36 @@ export class Render {
       const baseIndex = i+1;
       
       if (i < 9) {
-        const frameScoreText = (f.roll1 != null ? f.roll1 : '') + ' ' + (f.roll2 != null ? f.roll2 : '');
-        rollRow.cells[baseIndex].textContent = frameScoreText;
+        let roll1Val = f.roll1 != null ? f.roll1 : '';
+        let roll2Val = f.roll2 != null ? f.roll2 : '';
+        if (util.frameIsStrike(f)) {
+          roll1Val = scoreboardStrike;
+        } else if (util.frameIsSpare(f)) {
+          roll2Val = scoreboardSpare;
+        }
+
+        rollRow.cells[baseIndex].textContent = roll1Val + ' ' + roll2Val;
         totalRow.cells[baseIndex].textContent = f.cumulative || '';
       } else {
-        rollRow.cells[baseIndex].textContent = (f.roll1 != null ? f.roll1 : '') + ' ' + (f.roll2 != null ? f.roll2 : '') + ' ' + (f.roll3 != null ? f.roll3 : '')
+        let roll1Val = f.roll1 != null ? f.roll1 : '';
+        let roll2Val = f.roll2 != null ? f.roll2 : '';
+        let roll3Val = f.roll3 != null ? f.roll3 : '';
+
+        if (util.frameTenFirstRollIsStrike(f)) {
+          roll1Val = scoreboardStrike;
+        }
+
+        if (util.frameTenSecondRollIsStrike(f)) {
+          roll2Val = scoreboardStrike;
+        } else if (util.frameTenSecondRollIsSpare(f)) {
+          roll2Val = scoreboardSpare;
+        }
+
+        if (util.frameTenThirdRollIsStrike(f)) {
+          roll3Val = scoreboardStrike;
+        }
+
+        rollRow.cells[baseIndex].textContent = roll1Val + ' ' + roll2Val + ' ' + roll3Val;
         totalRow.cells[baseIndex].textContent = f.cumulative || '';
       }
     }
