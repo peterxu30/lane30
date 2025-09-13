@@ -47,7 +47,7 @@ const gameNotStartedSubtitle = "Drag ball left and right to aim";
 const gameNotStartedSecondSubtitle = "Tap to return ball";
 
 // Copy font sizes
-const gameNotStartedTitleFontSize = 22;
+const gameNotStartedTitleFontSize = 21.7;
 const gameNotStartedSubtitleFontSize = 18;
 const gameOverTitleFontSize = 49;
 const gameOverSubtitleFontSize = 18;
