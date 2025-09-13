@@ -1,9 +1,8 @@
 // TODO 
 // P0
+// - Refactor scoring system to replace 'X' and '/' with numbers and move strike and spare display to render
 // - control the ball via drag instead of click
 // - score should automatically update
-
-// - clean up abstractions
 // - ball trajectory should be affected by pin collisions
 // - stop pin movement after a while
 // - reset lane when all hit active pins velocity is 

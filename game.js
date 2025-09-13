@@ -136,6 +136,14 @@ class Game {
     this.ball.rolling = false;
   }
 
+  resetGame() {
+    this.resetLane();
+    this.frames = this.buildFrames();
+    this.currentFrame = 0;
+    this.rollInFrame = 0;
+    this.gameState = GameStates.RUNNING;
+  }
+
   isStrike() {
     const pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
     return pinsHit === 10 && this.rollInFrame === 0;
@@ -304,23 +312,16 @@ class Game {
         // TODO(peter.xu) I don't like this here.
         // Should not reset game on click. Should keep scoreboard and display a game over message.
         // Clicking again should start a new game.
-        console.log('isGameOver ' + this.isGameOver() + ' ' + this.gameState.toString());
         if (this.isGameOver()) {
           if (this.gameState === GameStates.RUNNING) {
             console.log("Setting game state from running to restart");
             this.gameState = GameStates.RESTART;
           } else if (this.gameState === GameStates.RESTART) {
-            console.log('GAME OVER');
-
             // this should be encapsulated into a resetGame method
-            this.frames = this.buildFrames();
-            this.currentFrame = 0;
-            this.rollInFrame = 0;
-            this.resetLane();
-            this.gameState = GameStates.RUNNING;
+            this.resetGame();
           }
         } else {
-          this.resetLane(); // really should be renamed rerack
+          this.resetLane();
         }
       }
     }
