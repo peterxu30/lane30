@@ -75,12 +75,12 @@ export class Engine {
     });
 
     // Round pin speed
-    pins.forEach(p => {
-      let roundedPinVx = Math.trunc(p.vx*5000) / 5000;
-      let roundedPinYx = Math.trunc(p.vy*5000) / 5000;
-      p.vx = roundedPinVx;
-      p.vy = roundedPinYx;
-    })
+    // pins.forEach(p => {
+    //   let roundedPinVx = Math.trunc(p.vx*1000) / 1000;
+    //   let roundedPinYx = Math.trunc(p.vy*1000) / 1000;
+    //   p.vx = roundedPinVx;
+    //   p.vy = roundedPinYx;
+    // })
   }
 
   resolveCollision(a, b, tickModifierRatio) {

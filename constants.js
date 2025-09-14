@@ -7,19 +7,18 @@
  * - RUNNING: The ball is rolling and/or pins are moving.
  * - FRAME_DONE: The ball has rolled off screen and the pins are finished moving. Scores are calculated. The lane is reset/cleared.
  * - OVER: The tenth frame has just been completed. Game over text is displayed.
- * - RESTART: The game is reset to the beginning. All frames are cleared.
  * The state machine of the game is as follows:
  * 
- *                           --------------------------------(tap)--------------------------------
- *                           |                                                                   |
- *                           v                                                                   |
- * INITIALIZED --(tap)--> RUNNING --(automatic)--> FRAME_DONE --(automatic)--> OVER --(tap)--> RESTART
- *                           ^                         |
- *                           |                         |          
- * NOT_RUNNING -----(tap)-----                         |
- *     ^                                               |
- *     |                                               |
- *     ------------------(automatic)-------------------|
+ * INITIALIZED --(tap)--> RUNNING --(automatic/tap)--> FRAME_DONE --(automatic)--> OVER
+ *                           ^                            |                         |
+ *                           |                            |                         |
+ * NOT_RUNNING -----(tap)-----                            |                         |
+ *    ^   ^                                               |                         |
+ *    |   |                                               |                         |
+ *    |   ------------------(automatic/tap)---------------|                         |
+ *    |                                                                             |
+ *    |                                                                             |
+ *    ----------------------------(tap)----------------------------------------------
  */
 export const GameStates = Object.freeze({
   INITIALIZED: Symbol("initialized"), // game loaded for first time, game is only ever in this state once at the beginning
@@ -27,5 +26,5 @@ export const GameStates = Object.freeze({
   RUNNING:   Symbol("running"), // ball is moving and on screen
   FRAME_DONE: Symbol("frame_done"), // ball of screen, pins finished moving
   OVER:  Symbol("over"), // game is over, ten frames have been bowled 
-  RESTART: Symbol("restart") // starting a new game
+  RESTART: Symbol("restart") // starting a new game // NOT USED
 });
