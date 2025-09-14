@@ -9,6 +9,10 @@
 // - Print on screen the actual available canvas dimensions on physical iPhone because Chrome URL bar eats into available screen space
 // - Add new GameState for BallReturn when ball has left the top of the screen to display "Tap to get ball back"
 //     - this will be game state to display nice job message 
+//     - this will be between RUNNING and FRAME_DONE. Automatically transition from RUNNING -> NEW_STATE when ball has left play
+//     - NEW_STATE displays text
+//     - Tap transitions NEW_STATE -> FRAME_DONE and FRAME_DONE automatically transitions to NOT_RUNNING.
+//     - Still only one tap required to go from RUNNING to NOT_RUNNING
 // - Add new GameState for pins done moving - will also automatically update score
 // - Separate mouse click from game logic. RegisterClick() should have a switch for different game states
 
