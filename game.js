@@ -53,7 +53,7 @@ class Game {
     this.frames = this.buildFrames();
     
     this.lane = {
-      x: 0,
+      x: 0, // This is not just the x of the lane itself but the x of (gutter, lane, gutter)
       y: 0,
       width: laneWidth,
       height: laneHeight,
@@ -80,14 +80,13 @@ class Game {
     this.mouseX = rect.right - rect.left / 2;
 
     // initial game state
-    this.gameState = GameStates.NOT_STARTED;
+    this.gameState = GameStates.INITIALIZED;
   }
 
   #getLaneCenterX(laneStartingX, laneWidth, gutterWidth) {
     return laneStartingX + (laneWidth + 2 * gutterWidth) / 2;
   }
 
-  // TODO(peter.xu) Add is spare/strike
   buildFrames() {
     return Array(10).fill(null).map(() => ({
       roll1: null,
@@ -154,7 +153,9 @@ class Game {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
   }
 
+  // handleRoll calculates points and advances the roll and frame.
   // TODO(peter.xu) Refactor this
+  // handleRoll should return whether to reset lane or not
   handleRoll() {
     const pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
     this.pins.forEach(p => { (p.hit) ? p.scored = true : p.scored = false; });
@@ -270,8 +271,13 @@ class Game {
 
     this.render.initialize(this.lane.width, this.lane.height, this.lane.gutterWidth);
     this.render.setupMouseMoveListener(this);
-    this.render.setupMouseClickListener(this.mouseClickListenerCallback.bind(this));
+    // this.render.setupMouseClickListener(this.mouseClickListenerCallback.bind(this));
+    this.render.setupMouseClickListener(this.mouseClickListenerCallback2.bind(this));
     this.initialized = true;
+  }
+
+  mouseClickListenerCallback2() {
+    this.handleGameState(true);
   }
 
   mouseClickListenerCallback() {
@@ -324,6 +330,113 @@ class Game {
     }
   }
 
+  // TODO(peter.xu) this will have to handle mouse drag release too
+  // Mouse drag press should only move the ball horizontally, not advance game states or do anything else
+  // function should take in a boolean isMouseClick and various states that are automatic ignore the input
+  handleGameState(isMouseClick) {
+    let previousGameState = this.gameState; // logging
+
+    switch (this.gameState) {
+      case GameStates.RESTART:
+        // RESTART means the game is restarting. New frames, new pins, new ball.
+        if (!isMouseClick) {
+          break;
+        }
+
+        this.resetGame();
+      case GameStates.INITIALIZED:
+        if (!isMouseClick) {
+          break;
+        }
+      case GameStates.NOT_RUNNING:
+        if (!isMouseClick) {
+          break;
+        }
+
+        // A mouse click in NOT_RUNNING game state should start the game and roll the ball
+        if (!this.ball.rolling) { // idk if we need this if check
+          // This logic controls the ball's horizontal position before it is rolled
+          // Currently bound the ball to always be within the lane. (Cannot throw a gutter ball).
+          const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
+          const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
+          const targetX = Math.max(minX, Math.min(maxX, this.mouseX));
+          this.ball.x += (targetX - this.ball.x);
+
+          this.ball.rolling = true; // start moving
+        }
+
+        this.gameState = GameStates.RUNNING;
+        break;
+      case GameStates.RUNNING:
+        if (isMouseClick) {
+          console.log(this.pins);
+        }
+
+        // Check that pins are moving
+        const ballOutOfLane = (this.ball.y + this.ball.r < this.lane.y);
+        const pinsStoppedMoving = this.pins.every(p => p.vx === 0 && p.vy === 0);
+        if (ballOutOfLane && pinsStoppedMoving) {
+          this.gameState = GameStates.FRAME_DONE;
+        }
+        break;
+      case GameStates.FRAME_DONE:
+        // FRAME_DONE means that the pins have stopped moving and the ball has rolled off the screen.
+        // In this game state: scores are calculated and the lane is reset/cleared.
+        // If first roll of frame and no strike: reset ball and remove hit pins, leave remaining pins on lane
+        // If first roll of frame and strike: reset ball and reset pins to full set
+        // If second roll of frame: reset ball and reset pins to full set
+        
+        if (isMouseClick) {
+          break;
+        }
+
+        // TODO(peter.xu) This logic is a duplicate of handleRoll. Need to consolidate. handleRoll should tell us
+        // whether to reset the pins or not.
+        let previousRollInFrame = this.rollInFrame;
+        let previousFrameIsStrike = this.isStrike(this.pins);
+        
+        if (previousFrameIsStrike) {
+          console.log("IS STRIKE");
+        }
+        
+        this.handleRoll(this.pins);
+        this.gameState = GameStates.NOT_RUNNING;
+        if (previousRollInFrame === 0 && !previousFrameIsStrike) {
+          // Still has rolls left in frame
+          this.clearHitPins();
+          this.resetBall();
+        } else {
+          // No more rolls left in frame
+
+          // TODO(peter.xu) I don't like this here.
+          // Should not reset game on click. Should keep scoreboard and display a game over message.
+          // Clicking again should start a new game.
+          if (this.isGameOver()) {
+            // No more frames left in game
+            this.gameState = GameStates.OVER;
+          } else {
+            // Reset lane for next frame
+            this.resetLane(); // unclear that this also resets ball
+          }
+        }
+        break;
+      case GameStates.OVER:
+        // OVER means the last roll of the tenth frame has happened.
+        if (!isMouseClick) {
+          break;
+        }
+
+        this.gameState = GameStates.RESTART;
+        break;
+    }
+
+    if (previousGameState === this.gameState) {
+      console.log(`No change in game state. Game state: ${this.gameState.description}`);
+    } else {
+      console.log(`Switching from ${previousGameState.description} to ${this.gameState.description}. IsMouseClick: ${isMouseClick}`);
+    }
+  }
+
   isGameOver() {
     if (this.currentFrame >= 10) {
       console.log("game is over");
@@ -342,6 +455,8 @@ class Game {
     function runHelper(timestamp) {
       self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
+      // TODO(peter.xu) Detect GameState change method
+      self.handleGameState(false)
       window.requestAnimationFrame(runHelper); // recursive call
     }
     window.requestAnimationFrame(runHelper);

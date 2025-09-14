@@ -5,7 +5,7 @@ import * as util from './util.js';
  * RenderStates represents the possible states of the render.
  */
 const RenderStates = Object.freeze({
-  NOT_STARTED: Symbol("not_started"),
+  INITIALIZED: Symbol("initialized"),
   RUNNING: Symbol("running"),
   OVER: Symbol("over")
 });
@@ -14,10 +14,10 @@ const RenderStates = Object.freeze({
  * GameStateToRenderState maps the game state to the render state.
  */
 const gameStateToRenderState = {
-  [GameStates.NOT_STARTED]: RenderStates.NOT_STARTED,
-  [GameStates.RUNNING]: RenderStates.RUNNING,
-  [GameStates.OVER]: RenderStates.OVER,
-  [GameStates.RESTART]: RenderStates.OVER
+  [GameStates.INITIALIZED]: RenderStates.INITIALIZED,
+  [GameStates.RUNNING]: RenderStates.RUNNING, // unused
+  [GameStates.OVER]: RenderStates.OVER
+  // [GameStates.RESTART]: RenderStates.OVER
 };
 
 // Scoreboard HTML elements
@@ -380,7 +380,7 @@ export class Render {
 
   writeTextForGameState(gameState) {
     switch (gameStateToRenderState[gameState]) {
-      case RenderStates.NOT_STARTED:
+      case RenderStates.INITIALIZED:
         this.writeGameNotStartedText();
         break;
       case RenderStates.OVER:

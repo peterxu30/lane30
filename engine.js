@@ -63,14 +63,24 @@ export class Engine {
 
       // check gutters/out
       if (
-        p.x < lane.x - lane.gutterWidth ||
-        p.x > lane.x + lane.width + lane.gutterWidth ||
+        p.x < lane.x ||
+        p.x > lane.x + lane.width + 2*lane.gutterWidth ||
         p.y < lane.y ||
         p.y > lane.y + lane.height
       ) {
         p.active = false;
+        p.vx = 0;
+        p.vy = 0;
       }
     });
+
+    // Round pin speed
+    pins.forEach(p => {
+      let roundedPinVx = Math.trunc(p.vx*5000) / 5000;
+      let roundedPinYx = Math.trunc(p.vy*5000) / 5000;
+      p.vx = roundedPinVx;
+      p.vy = roundedPinYx;
+    })
   }
 
   resolveCollision(a, b, tickModifierRatio) {
