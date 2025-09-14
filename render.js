@@ -17,7 +17,6 @@ const gameStateToRenderState = {
   [GameStates.INITIALIZED]: RenderStates.INITIALIZED,
   [GameStates.RUNNING]: RenderStates.RUNNING, // unused
   [GameStates.OVER]: RenderStates.OVER
-  // [GameStates.RESTART]: RenderStates.OVER
 };
 
 // Scoreboard HTML elements
