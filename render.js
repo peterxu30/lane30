@@ -70,6 +70,9 @@ export class Render {
     this.canvas = canvas;
     this.ctx = this.canvas.getContext('2d');
     this.renderScale = 1;
+    
+    // touch drag
+    this.touches = [];
   }
 
   getTopMargin(element) {
@@ -328,6 +331,117 @@ export class Render {
       callback();
     });
   }
+
+  /// drag testing
+  // BREAKS IF THERE'S NO BALL
+  setupTouchStart(callback) {
+    this.canvas.addEventListener('touchstart',
+      (ev) => {
+        // we only care about one input. discard any new ones
+        if (this.touches.length > 0) {
+          return;
+        }
+
+        const touch = ev.changedTouches[0];
+
+        const rect = this.canvas.getBoundingClientRect();
+        const touchX = (touch.pageX - rect.left) / this.renderScale;
+        const touchY = (touch.pageY - rect.top);
+
+        if (!callback(touchX, touchY)) {
+          return;
+        }
+
+        this.touches.push(touch);
+        console.log(touch.pageX, rect.left, touchX, touchY);
+      },
+      false);
+  }
+
+  setupTouchMove(callback) {
+    this.canvas.addEventListener('touchmove',
+      (ev) => {
+        const touches = ev.changedTouches;
+
+        for (const touch of touches) {
+          const touchIdentifier = touch.identifier;
+          if (this.#ongoingTouchIndexById(touchIdentifier) == 0) {
+            const rect = this.canvas.getBoundingClientRect();
+            const touch = ev.changedTouches[0];
+            const touchX = (touch.pageX - rect.left) / this.renderScale;
+            const touchY = (touch.pageY - rect.top) / this.renderScale;
+            // console.log(touchX);
+
+            // console.log(game.mouseX);
+            callback(touchX, touchY);
+          } else {
+            console.log('WRONG TOUCH');
+          }
+        }
+
+        // const rect = this.canvas.getBoundingClientRect();
+        // const touch = ev.changedTouches[0];
+        // const touchX = (touch.pageX - rect.left) / this.renderScale;
+        // // console.log(touchX);
+
+        // game.mouseX = touchX;
+        // // console.log(game.mouseX);
+        // callback(game.mouseX);
+      },
+      false)
+  }
+
+  // this neeeds to handle callback like setupMouseClickListener above
+  setupTouchEnd(callback) {
+    this.canvas.addEventListener('touchend',
+      (ev) => {
+        const touches = ev.changedTouches;
+        for (const touch of touches) {
+          const touchIdentifier = touch.identifier;
+          const touchIndex = this.#ongoingTouchIndexById(touchIdentifier);
+          if (touchIndex == 0) {
+            callback();
+            console.log("TOUCH END");
+          } else {
+            console.log('WRONG TOUCH');
+          }
+          
+          // cleanup touch
+          if (touchIndex >= 0) {
+            console.log('Before: ' + this.touches);
+            this.touches.splice(touchIndex, 1);
+            console.log('After: ' + this.touches);
+          }
+        }
+      },
+      false)
+  }
+
+  setupTouchCancel() {
+    this.canvas.addEventListener('touchcancel',
+      (ev) => {
+        const id = this.#ongoingTouchIndexById(id);
+        console.log(this.touches);
+        this.touches.splice(id, 1);
+        console.log(this.touches);
+      },
+      false)
+  }
+
+  // removeTouchEvent(ev)
+
+  #ongoingTouchIndexById(idToFind) {
+    for (let i = 0; i < this.touches.length; i++) {
+      const id = this.touches[i].identifier;
+  
+      if (id === idToFind) {
+        return i;
+      }
+    }
+    return -1; // not found
+  }
+
+  /// drag testing end
 
   #getCanvasWidth() {
     return parseInt(this.canvas.style.width, 10);

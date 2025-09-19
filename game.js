@@ -270,10 +270,40 @@ class Game {
     if (this.initialized) return;
 
     this.render.initialize(this.lane.width, this.lane.height, this.lane.gutterWidth);
-    this.render.setupMouseMoveListener(this);
-    this.render.setupMouseClickListener(this.mouseClickListenerCallback.bind(this));
+    // this.render.setupMouseMoveListener(this);
+    // this.render.setupMouseClickListener(this.mouseClickListenerCallback.bind(this));
+
+    // testing drag
+    this.render.setupTouchStart(this.touchStartCallback.bind(this));
+    this.render.setupTouchMove(this.touchMoveCallback.bind(this));
+    this.render.setupTouchEnd(this.mouseClickListenerCallback.bind(this));
+    this.render.setupTouchCancel();
+    //
+
     this.initialized = true;
   }
+
+  // testing drag
+  touchMoveCallback(touchX) {
+    const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
+    const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
+    this.ball.x = Math.max(minX, Math.min(maxX, touchX));
+  }
+
+  touchStartCallback(touchX, touchY) {
+    // only register this touch if touching the ball
+    // const ballLeftX = this.ball.x - this.ball.r;
+    // const ballRightX = this.ball.x + this.ball.r;
+    // const ballTopY = this.ball.y - this.ball.r;
+
+    console.log(touchX, touchY, this.ball.x, this.ball.y);
+    const x = Math.abs(touchX - this.ball.x);
+    const y = Math.abs(touchY - this.ball.y);
+    const touchDistanceFromBallCenter = Math.hypot(x,y);
+    console.log('touchDistanceFromBallCenter: ' + touchDistanceFromBallCenter + ' ballR: ' + this.ball.r);
+    return touchDistanceFromBallCenter <= this.ball.r || (this.gameState != GameStates.INITIALIZED && this.gameState != GameStates.NOT_RUNNING);
+  }
+  //
 
   mouseClickListenerCallback() {
     this.handleGameState(true);
@@ -296,13 +326,15 @@ class Game {
           break;
         }
 
+        // TODO(peter.xu) Don't need this here if using drag controls.
         // A mouse click in NOT_RUNNING game state should start the game and roll the ball
         // This logic controls the ball's horizontal position before it is rolled
         // Currently bound the ball to always be within the lane. (Cannot throw a gutter ball).
-        const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
-        const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
-        const targetX = Math.max(minX, Math.min(maxX, this.mouseX));
-        this.ball.x += (targetX - this.ball.x);
+        // const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
+        // const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
+        // const targetX = Math.max(minX, Math.min(maxX, this.mouseX));
+        // this.ball.x += (targetX - this.ball.x);
+
         this.ball.rolling = true; // start moving
 
         this.gameState = GameStates.RUNNING;
