@@ -301,7 +301,8 @@ class Game {
     const y = Math.abs(touchY - this.ball.y);
     const touchDistanceFromBallCenter = Math.hypot(x,y);
     console.log('touchDistanceFromBallCenter: ' + touchDistanceFromBallCenter + ' ballR: ' + this.ball.r);
-    return touchDistanceFromBallCenter <= this.ball.r || (this.gameState != GameStates.INITIALIZED && this.gameState != GameStates.NOT_RUNNING);
+    return true;
+    // return touchDistanceFromBallCenter <= this.ball.r || (this.gameState != GameStates.INITIALIZED && this.gameState != GameStates.NOT_RUNNING);
   }
   //
 
