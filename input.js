@@ -1,6 +1,6 @@
 /**
  * Input is responsible for managing touch state.
- * It acts as a touch store.
+ * It acts as a touch store. Maybe rename it touch store
  */
 export class Input {
   constructor(canvas) {
