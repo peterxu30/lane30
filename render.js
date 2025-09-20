@@ -1,4 +1,5 @@
 import { GameStates } from './constants.js';
+import { ActiveInputManager } from './active-input-manager.js';
 import * as util from './util.js';
 
 /**
@@ -72,7 +73,7 @@ export class Render {
     this.renderScale = 1;
     
     // touch drag
-    this.touches = [];
+    this.activeInputManager = new ActiveInputManager();
   }
 
   getTopMargin(element) {
@@ -332,19 +333,12 @@ export class Render {
     });
   }
 
-  /// drag testing
-
-  // ideally we have touch in a separate class. It's responsibility is to manage 
-  // touch states (e.g. only one touch at a time, managing the list of ongoing touches)
-  // The listeners are still set up in Render because its user interacting with the rendered canvas
-  // Render decides whether the touch is valid
-  // If valid, sends it to Input class to manage.
-  // BREAKS IF THERE'S NO BALL
+  /// touch drag testing
   setupTouchStart(shouldRegisterTouchCallback) {
     this.canvas.addEventListener('touchstart',
       (ev) => {
         // we only care about one input. discard any new ones
-        if (this.touches.length > 0) {
+        if (this.activeInputManager.hasActiveTouch()) {
           return;
         }
 
@@ -359,7 +353,7 @@ export class Render {
           return;
         }
 
-        this.touches.push(touch);
+        this.activeInputManager.addTouch(touch);
         console.log(touch.pageX, rect.left, touchX, touchY);
       },
       false);
@@ -371,8 +365,7 @@ export class Render {
         const touches = ev.changedTouches;
 
         for (const touch of touches) {
-          const touchIdentifier = touch.identifier;
-          if (this.#ongoingTouchIndexById(touchIdentifier) === 0) {
+          if (this.activeInputManager.isActiveTouch(touch)) {
             const rect = this.canvas.getBoundingClientRect();
             const touch = ev.changedTouches[0];
             const touchX = (touch.pageX - rect.left) / this.renderScale;
@@ -387,28 +380,19 @@ export class Render {
       false)
   }
 
-  // this neeeds to handle callback like setupMouseClickListener above
   setupTouchEnd(callback) {
     this.canvas.addEventListener('touchend',
       (ev) => {
         const touches = ev.changedTouches;
         for (const touch of touches) {
-          const touchIdentifier = touch.identifier;
-          const touchIndex = this.#ongoingTouchIndexById(touchIdentifier);
-          if (touchIndex === 0) {
+          if (this.activeInputManager.isActiveTouch(touch)) {
             callback();
+            this.activeInputManager.clearActiveTouch();
             console.log("TOUCH END");
           } else {
             console.log('WRONG TOUCH');
           }
-          
-          // cleanup touch
-          if (touchIndex >= 0) {
-            this.touches.splice(touchIndex, 1);
-          }
         }
-
-        // this.input.removeTouches(touches);
       },
       false)
   }
@@ -416,25 +400,15 @@ export class Render {
   setupTouchCancel() {
     this.canvas.addEventListener('touchcancel',
       (ev) => {
-        const id = this.#ongoingTouchIndexById(id);
-        console.log(this.touches);
-        this.touches.splice(id, 1);
-        console.log(this.touches);
+        const touches = ev.changedTouches;
+        for (const touch of touches) {
+          if (this.activeInputManager.isActiveTouch(touch)) {
+            this.activeInputManager.clearActiveTouch();
+          }
+        }
       },
       false)
   }
-
-  #ongoingTouchIndexById(idToFind) {
-    for (let i = 0; i < this.touches.length; i++) {
-      const id = this.touches[i].identifier;
-  
-      if (id === idToFind) {
-        return i;
-      }
-    }
-    return -1; // not found
-  }
-
   /// drag testing end
 
   #getCanvasWidth() {

@@ -284,16 +284,6 @@ class Game {
   }
 
   // testing drag
-  touchMoveCallback(touchX) {
-    if (this.gameState == GameStates.RUNNING) {
-      return;
-    }
-
-    const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
-    const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
-    this.ball.x = Math.max(minX, Math.min(maxX, touchX));
-  }
-
   touchStartCallback(touchX, touchY) {
     switch (this.gameState) {
       case GameStates.INITIALIZED:
@@ -306,6 +296,16 @@ class Game {
       default:
         return true;
     }
+  }
+
+  touchMoveCallback(touchX) {
+    if (this.gameState == GameStates.RUNNING) {
+      return;
+    }
+
+    const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
+    const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
+    this.ball.x = Math.max(minX, Math.min(maxX, touchX));
   }
   //
 
