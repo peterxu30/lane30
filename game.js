@@ -291,18 +291,13 @@ class Game {
   }
 
   touchStartCallback(touchX, touchY) {
-    // only register this touch if touching the ball
-    // const ballLeftX = this.ball.x - this.ball.r;
-    // const ballRightX = this.ball.x + this.ball.r;
-    // const ballTopY = this.ball.y - this.ball.r;
-
     console.log(touchX, touchY, this.ball.x, this.ball.y);
     const x = Math.abs(touchX - this.ball.x);
     const y = Math.abs(touchY - this.ball.y);
     const touchDistanceFromBallCenter = Math.hypot(x,y);
     console.log('touchDistanceFromBallCenter: ' + touchDistanceFromBallCenter + ' ballR: ' + this.ball.r);
-    return true;
-    // return touchDistanceFromBallCenter <= this.ball.r || (this.gameState != GameStates.INITIALIZED && this.gameState != GameStates.NOT_RUNNING);
+    // return true;
+    return touchDistanceFromBallCenter <= this.ball.r || (this.gameState != GameStates.INITIALIZED && this.gameState != GameStates.NOT_RUNNING);
   }
   //
 
