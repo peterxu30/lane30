@@ -333,6 +333,12 @@ export class Render {
   }
 
   /// drag testing
+
+  // ideally we have touch in a separate class. It's responsibility is to manage 
+  // touch states (e.g. only one touch at a time, managing the list of ongoing touches)
+  // The listeners are still set up in Render because its user interacting with the rendered canvas
+  // Render decides whether the touch is valid
+  // If valid, sends it to Input class to manage.
   // BREAKS IF THERE'S NO BALL
   setupTouchStart(callback) {
     this.canvas.addEventListener('touchstart',
@@ -346,7 +352,7 @@ export class Render {
 
         const rect = this.canvas.getBoundingClientRect();
         const touchX = (touch.pageX - rect.left) / this.renderScale;
-        const touchY = (touch.pageY - rect.top);
+        const touchY = (touch.pageY - rect.top) / this.renderScale;
 
         if (!callback(touchX, touchY)) {
           return;
@@ -370,23 +376,12 @@ export class Render {
             const touch = ev.changedTouches[0];
             const touchX = (touch.pageX - rect.left) / this.renderScale;
             const touchY = (touch.pageY - rect.top) / this.renderScale;
-            // console.log(touchX);
 
-            // console.log(game.mouseX);
             callback(touchX, touchY);
           } else {
             console.log('WRONG TOUCH');
           }
         }
-
-        // const rect = this.canvas.getBoundingClientRect();
-        // const touch = ev.changedTouches[0];
-        // const touchX = (touch.pageX - rect.left) / this.renderScale;
-        // // console.log(touchX);
-
-        // game.mouseX = touchX;
-        // // console.log(game.mouseX);
-        // callback(game.mouseX);
       },
       false)
   }
@@ -408,11 +403,11 @@ export class Render {
           
           // cleanup touch
           if (touchIndex >= 0) {
-            console.log('Before: ' + this.touches);
             this.touches.splice(touchIndex, 1);
-            console.log('After: ' + this.touches);
           }
         }
+
+        // this.input.removeTouches(touches);
       },
       false)
   }
