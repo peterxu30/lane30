@@ -74,10 +74,6 @@ class Game {
     };
 
     this.pins = this.buildPins();
-    
-    // initialize mouseX to middle of lane
-    const rect = this.canvas.getBoundingClientRect();
-    this.mouseX = rect.right - rect.left / 2;
 
     // initial game state
     this.gameState = GameStates.INITIALIZED;
@@ -279,28 +275,27 @@ class Game {
     this.initialized = true;
   }
 
-  pointerDownCallback(touchX, touchY) {
+  pointerDownCallback(pointerX, pointerY) {
     switch (this.gameState) {
       case GameStates.INITIALIZED:
       case GameStates.NOT_RUNNING:
-        console.log(touchX, touchY, this.ball.x, this.ball.y);
-        const x = Math.abs(touchX - this.ball.x);
-        const y = Math.abs(touchY - this.ball.y);
-        const touchDistanceFromBallCenter = Math.hypot(x,y);
-        return touchDistanceFromBallCenter <= this.ball.r;
+        const x = Math.abs(pointerX - this.ball.x);
+        const y = Math.abs(pointerY - this.ball.y);
+        const distanceFromBallCenter = Math.hypot(x,y);
+        return distanceFromBallCenter <= this.ball.r;
       default:
         return true;
     }
   }
 
-  pointerMoveCallback(touchX) {
+  pointerMoveCallback(pointerX) {
     if (this.gameState == GameStates.RUNNING) {
       return;
     }
 
     const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
     const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
-    this.ball.x = Math.max(minX, Math.min(maxX, touchX));
+    this.ball.x = Math.max(minX, Math.min(maxX, pointerX));
   }
 
   pointerEndCallback() {
@@ -308,32 +303,22 @@ class Game {
   }
 
   // Mouse drag press should only move the ball horizontally, not advance game states or do anything else
-  // function should take in a boolean isMouseClick and various states that are automatic ignore the input
-  handleGameState(isMouseClick) {
+  // function should take in a boolean isUserInput and various states that are automatic ignore the input
+  handleGameState(isUserInput) {
     let previousGameState = this.gameState; // logging
 
     switch (this.gameState) {
       case GameStates.INITIALIZED:
         // INITIALIZED has the same behavior as NOT_RUNNING
-        if (!isMouseClick) {
+        if (!isUserInput) {
           break;
         }
       case GameStates.NOT_RUNNING:
-        if (!isMouseClick) {
+        if (!isUserInput) {
           break;
         }
 
-        // TODO(peter.xu) Don't need this here if using drag controls.
-        // A mouse click in NOT_RUNNING game state should start the game and roll the ball
-        // This logic controls the ball's horizontal position before it is rolled
-        // Currently bound the ball to always be within the lane. (Cannot throw a gutter ball).
-        // const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
-        // const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
-        // const targetX = Math.max(minX, Math.min(maxX, this.mouseX));
-        // this.ball.x += (targetX - this.ball.x);
-
         this.ball.rolling = true; // start moving
-
         this.gameState = GameStates.RUNNING;
         break;
       case GameStates.RUNNING:
@@ -342,11 +327,11 @@ class Game {
         
         // TODO(peter.xu) This doesn't feel good, it can be a very slow or very quick transition depending on the roll
         // const pinsStoppedMoving = this.pins.every(p => p.vx === 0 && p.vy === 0);
-        // if ((ballOutOfLane && pinsStoppedMoving) || (ballOutOfLane && isMouseClick)) {
+        // if ((ballOutOfLane && pinsStoppedMoving) || (ballOutOfLane && isUserInput)) {
         //   this.gameState = GameStates.FRAME_DONE;
         // }
 
-        if (ballOutOfLane && isMouseClick) {
+        if (ballOutOfLane && isUserInput) {
           this.gameState = GameStates.FRAME_DONE;
         }
         break;
@@ -357,7 +342,7 @@ class Game {
         // If first roll of frame and strike: reset ball and reset pins to full set
         // If second roll of frame: reset ball and reset pins to full set
         
-        if (isMouseClick) {
+        if (isUserInput) {
           break;
         }
 
@@ -392,7 +377,7 @@ class Game {
       case GameStates.OVER:
         // OVER means the last roll of the tenth frame has happened.
         // Reset the game and wait for player to start again.
-        if (!isMouseClick) {
+        if (!isUserInput) {
           break;
         }
 
@@ -402,7 +387,7 @@ class Game {
     }
 
     if (previousGameState != this.gameState) {
-      console.log(`Switching from ${previousGameState.description} to ${this.gameState.description}. IsMouseClick: ${isMouseClick}`);
+      console.log(`Switching from ${previousGameState.description} to ${this.gameState.description}. isUserInput: ${isUserInput}`);
     }
   }
 
