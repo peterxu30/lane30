@@ -270,21 +270,16 @@ class Game {
     if (this.initialized) return;
 
     this.render.initialize(this.lane.width, this.lane.height, this.lane.gutterWidth);
-    // this.render.setupMouseMoveListener(this);
-    // this.render.setupMouseClickListener(this.mouseClickListenerCallback.bind(this));
 
-    // testing drag
-    this.render.setupTouchStart(this.touchStartCallback.bind(this));
-    this.render.setupTouchMove(this.touchMoveCallback.bind(this));
-    this.render.setupTouchEnd(this.mouseClickListenerCallback.bind(this));
-    this.render.setupTouchCancel();
-    //
+    this.render.setupPointerDownListener(this.pointerDownCallback.bind(this));
+    this.render.setupPointerMoveListener(this.pointerMoveCallback.bind(this));
+    this.render.setupPointerEndListener(this.pointerEndCallback.bind(this));
+    this.render.setupPointerCancelListener();
 
     this.initialized = true;
   }
 
-  // testing drag
-  touchStartCallback(touchX, touchY) {
+  pointerDownCallback(touchX, touchY) {
     switch (this.gameState) {
       case GameStates.INITIALIZED:
       case GameStates.NOT_RUNNING:
@@ -298,7 +293,7 @@ class Game {
     }
   }
 
-  touchMoveCallback(touchX) {
+  pointerMoveCallback(touchX) {
     if (this.gameState == GameStates.RUNNING) {
       return;
     }
@@ -307,13 +302,11 @@ class Game {
     const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
     this.ball.x = Math.max(minX, Math.min(maxX, touchX));
   }
-  //
 
-  mouseClickListenerCallback() {
+  pointerEndCallback() {
     this.handleGameState(true);
   }
 
-  // TODO(peter.xu) this will have to handle mouse drag release too
   // Mouse drag press should only move the ball horizontally, not advance game states or do anything else
   // function should take in a boolean isMouseClick and various states that are automatic ignore the input
   handleGameState(isMouseClick) {

@@ -1,5 +1,5 @@
 import { GameStates } from './constants.js';
-import { ActiveInputManager } from './active-input-manager.js';
+import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 
 /**
@@ -73,7 +73,7 @@ export class Render {
     this.renderScale = 1;
     
     // touch drag
-    this.activeInputManager = new ActiveInputManager();
+    this.activePointerManager = new ActivePointerManager();
   }
 
   getTopMargin(element) {
@@ -319,97 +319,60 @@ export class Render {
     }
   }
 
-  setupMouseMoveListener(game) {
-    this.canvas.addEventListener('mousemove', e => {
-      // reverse scaled based on canvas position
-      const rect = this.canvas.getBoundingClientRect();
-      game.mouseX = (e.clientX - rect.left) / this.renderScale;
-    });
-  }
-
-  setupMouseClickListener(callback) {
-    this.canvas.addEventListener('click', () => {
-      callback();
-    });
-  }
-
-  /// touch drag testing
-  setupTouchStart(shouldRegisterTouchCallback) {
-    this.canvas.addEventListener('touchstart',
-      (ev) => {
+  setupPointerDownListener(shouldRegisterPointerCallback) {
+    this.canvas.addEventListener('pointerdown',
+      (pointer) => {
         // we only care about one input. discard any new ones
-        if (this.activeInputManager.hasActiveTouch()) {
+        if (this.activePointerManager.hasActivePointer()) {
           return;
         }
-
-        const touch = ev.changedTouches[0];
 
         // TODO(peter.xu) refactor scaling and unscaling by renderScale into helper method
         const rect = this.canvas.getBoundingClientRect();
-        const touchX = (touch.pageX - rect.left) / this.renderScale;
-        const touchY = (touch.pageY - rect.top) / this.renderScale;
+        const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+        const pointerY = (pointer.pageY - rect.top) / this.renderScale;
 
-        if (!shouldRegisterTouchCallback(touchX, touchY)) {
+        if (!shouldRegisterPointerCallback(pointerX, pointerY)) {
           return;
         }
 
-        this.activeInputManager.addTouch(touch);
-        console.log(touch.pageX, rect.left, touchX, touchY);
+        this.activePointerManager.addPointer(pointer);
       },
       false);
   }
 
-  setupTouchMove(callback) {
-    this.canvas.addEventListener('touchmove',
-      (ev) => {
-        const touches = ev.changedTouches;
-
-        for (const touch of touches) {
-          if (this.activeInputManager.isActiveTouch(touch)) {
-            const rect = this.canvas.getBoundingClientRect();
-            const touch = ev.changedTouches[0];
-            const touchX = (touch.pageX - rect.left) / this.renderScale;
-            const touchY = (touch.pageY - rect.top) / this.renderScale;
-
-            callback(touchX, touchY);
-          } else {
-            console.log('WRONG TOUCH');
-          }
+  setupPointerMoveListener(callback) {
+    this.canvas.addEventListener('pointermove',
+      (pointer) => {
+        if (this.activePointerManager.isActivePointer(pointer)) {
+          const rect = this.canvas.getBoundingClientRect();
+          const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+          callback(pointerX);
         }
       },
       false)
   }
 
-  setupTouchEnd(callback) {
-    this.canvas.addEventListener('touchend',
-      (ev) => {
-        const touches = ev.changedTouches;
-        for (const touch of touches) {
-          if (this.activeInputManager.isActiveTouch(touch)) {
-            callback();
-            this.activeInputManager.clearActiveTouch();
-            console.log("TOUCH END");
-          } else {
-            console.log('WRONG TOUCH');
-          }
+  setupPointerEndListener(callback) {
+    this.canvas.addEventListener('pointerup',
+      (pointer) => {
+        if (this.activePointerManager.isActivePointer(pointer)) {
+          callback();
+          this.activePointerManager.clearActivePointer();
         }
       },
       false)
   }
 
-  setupTouchCancel() {
-    this.canvas.addEventListener('touchcancel',
-      (ev) => {
-        const touches = ev.changedTouches;
-        for (const touch of touches) {
-          if (this.activeInputManager.isActiveTouch(touch)) {
-            this.activeInputManager.clearActiveTouch();
-          }
+  setupPointerCancelListener() {
+    this.canvas.addEventListener('pointercancel',
+      (pointer) => {
+        if (this.activePointerManager.isActivePointer(pointer)) {
+          this.activePointerManager.clearActivePointer();
         }
       },
       false)
   }
-  /// drag testing end
 
   #getCanvasWidth() {
     return parseInt(this.canvas.style.width, 10);
