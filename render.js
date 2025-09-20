@@ -340,7 +340,7 @@ export class Render {
   // Render decides whether the touch is valid
   // If valid, sends it to Input class to manage.
   // BREAKS IF THERE'S NO BALL
-  setupTouchStart(callback) {
+  setupTouchStart(shouldRegisterTouchCallback) {
     this.canvas.addEventListener('touchstart',
       (ev) => {
         // we only care about one input. discard any new ones
@@ -350,11 +350,12 @@ export class Render {
 
         const touch = ev.changedTouches[0];
 
+        // TODO(peter.xu) refactor scaling and unscaling by renderScale into helper method
         const rect = this.canvas.getBoundingClientRect();
         const touchX = (touch.pageX - rect.left) / this.renderScale;
         const touchY = (touch.pageY - rect.top) / this.renderScale;
 
-        if (!callback(touchX, touchY)) {
+        if (!shouldRegisterTouchCallback(touchX, touchY)) {
           return;
         }
 
@@ -371,7 +372,7 @@ export class Render {
 
         for (const touch of touches) {
           const touchIdentifier = touch.identifier;
-          if (this.#ongoingTouchIndexById(touchIdentifier) == 0) {
+          if (this.#ongoingTouchIndexById(touchIdentifier) === 0) {
             const rect = this.canvas.getBoundingClientRect();
             const touch = ev.changedTouches[0];
             const touchX = (touch.pageX - rect.left) / this.renderScale;
@@ -394,7 +395,7 @@ export class Render {
         for (const touch of touches) {
           const touchIdentifier = touch.identifier;
           const touchIndex = this.#ongoingTouchIndexById(touchIdentifier);
-          if (touchIndex == 0) {
+          if (touchIndex === 0) {
             callback();
             console.log("TOUCH END");
           } else {
@@ -422,8 +423,6 @@ export class Render {
       },
       false)
   }
-
-  // removeTouchEvent(ev)
 
   #ongoingTouchIndexById(idToFind) {
     for (let i = 0; i < this.touches.length; i++) {

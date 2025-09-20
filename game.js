@@ -285,19 +285,27 @@ class Game {
 
   // testing drag
   touchMoveCallback(touchX) {
+    if (this.gameState == GameStates.RUNNING) {
+      return;
+    }
+
     const minX = this.lane.x + this.lane.gutterWidth + this.ball.r;
     const maxX = this.lane.x + + this.lane.gutterWidth + this.lane.width - this.ball.r;
     this.ball.x = Math.max(minX, Math.min(maxX, touchX));
   }
 
   touchStartCallback(touchX, touchY) {
-    console.log(touchX, touchY, this.ball.x, this.ball.y);
-    const x = Math.abs(touchX - this.ball.x);
-    const y = Math.abs(touchY - this.ball.y);
-    const touchDistanceFromBallCenter = Math.hypot(x,y);
-    console.log('touchDistanceFromBallCenter: ' + touchDistanceFromBallCenter + ' ballR: ' + this.ball.r);
-    // return true;
-    return touchDistanceFromBallCenter <= this.ball.r || (this.gameState != GameStates.INITIALIZED && this.gameState != GameStates.NOT_RUNNING);
+    switch (this.gameState) {
+      case GameStates.INITIALIZED:
+      case GameStates.NOT_RUNNING:
+        console.log(touchX, touchY, this.ball.x, this.ball.y);
+        const x = Math.abs(touchX - this.ball.x);
+        const y = Math.abs(touchY - this.ball.y);
+        const touchDistanceFromBallCenter = Math.hypot(x,y);
+        return touchDistanceFromBallCenter <= this.ball.r;
+      default:
+        return true;
+    }
   }
   //
 

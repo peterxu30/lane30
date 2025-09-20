@@ -1,8 +1,7 @@
 /**
- * Input is responsible for managing touch state.
- * It acts as a touch store. Maybe rename it touch store
+ * ActiveTouchManager is responsible for managing one active touch state.
  */
-export class Input {
+export class ActiveTouchManager {
   constructor(canvas) {
     this.canvas = canvas;
     this.touches = [];
