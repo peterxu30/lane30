@@ -46,8 +46,6 @@ class Game {
     this.ticker = new Ticker(60); // responsible for maintaining a fixed refresh rate
 
     // Game objects
-    this.initialized = false;
-
     this.currentFrame = 0;
     this.rollInFrame = 0;
     this.frames = this.buildFrames();
@@ -263,16 +261,12 @@ class Game {
   }
 
   initialize() {
-    if (this.initialized) return;
-
     this.render.initialize(this.lane.width, this.lane.height, this.lane.gutterWidth);
 
     this.render.setupPointerDownListener(this.pointerDownCallback.bind(this));
     this.render.setupPointerMoveListener(this.pointerMoveCallback.bind(this));
     this.render.setupPointerEndListener(this.pointerEndCallback.bind(this));
     this.render.setupPointerCancelListener();
-
-    this.initialized = true;
   }
 
   pointerDownCallback(pointerX, pointerY) {
