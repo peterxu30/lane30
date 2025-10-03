@@ -323,20 +323,20 @@ export class Render {
     this.canvas.addEventListener('pointerdown',
       (pointer) => {
         // we only care about one input. discard any new ones
-        if (this.activePointerManager.hasActivePointer()) {
-          return;
-        }
+        // if (this.activePointerManager.hasActivePointer()) {
+        //   return;
+        // }
 
         // TODO(peter.xu) refactor scaling and unscaling by renderScale into helper method
-        const rect = this.canvas.getBoundingClientRect();
-        const pointerX = (pointer.pageX - rect.left) / this.renderScale;
-        const pointerY = (pointer.pageY - rect.top) / this.renderScale;
+        // const rect = this.canvas.getBoundingClientRect();
+        // const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+        // const pointerY = (pointer.pageY - rect.top) / this.renderScale;
 
-        if (!shouldRegisterPointerCallback(pointerX, pointerY)) {
-          return;
-        }
+        // if (!shouldRegisterPointerCallback(pointerX, pointerY)) {
+        //   return;
+        // }
 
-        this.activePointerManager.addPointer(pointer);
+        // this.activePointerManager.addPointer(pointer);
       },
       false);
   }
@@ -344,11 +344,11 @@ export class Render {
   setupPointerMoveListener(callback) {
     this.canvas.addEventListener('pointermove',
       (pointer) => {
-        if (this.activePointerManager.isActivePointer(pointer)) {
+        // if (this.activePointerManager.isActivePointer(pointer)) {
           const rect = this.canvas.getBoundingClientRect();
           const pointerX = (pointer.pageX - rect.left) / this.renderScale;
           callback(pointerX);
-        }
+        // }
       },
       false)
   }
@@ -356,10 +356,10 @@ export class Render {
   setupPointerEndListener(callback) {
     this.canvas.addEventListener('pointerup',
       (pointer) => {
-        if (this.activePointerManager.isActivePointer(pointer)) {
+        // if (this.activePointerManager.isActivePointer(pointer)) {
           callback();
           this.activePointerManager.clearActivePointer();
-        }
+        // }
       },
       false)
   }
@@ -367,9 +367,9 @@ export class Render {
   setupPointerCancelListener() {
     this.canvas.addEventListener('pointercancel',
       (pointer) => {
-        if (this.activePointerManager.isActivePointer(pointer)) {
+        // if (this.activePointerManager.isActivePointer(pointer)) {
           this.activePointerManager.clearActivePointer();
-        }
+        // }
       },
       false)
   }
