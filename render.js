@@ -1,4 +1,5 @@
 import { GameStates } from './constants.js';
+import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 
 /**
@@ -70,6 +71,9 @@ export class Render {
     this.canvas = canvas;
     this.ctx = this.canvas.getContext('2d');
     this.renderScale = 1;
+    
+    // touch drag
+    this.activePointerManager = new ActivePointerManager();
   }
 
   getTopMargin(element) {
@@ -315,18 +319,59 @@ export class Render {
     }
   }
 
-  setupMouseMoveListener(game) {
-    this.canvas.addEventListener('mousemove', e => {
-      // reverse scaled based on canvas position
-      const rect = this.canvas.getBoundingClientRect();
-      game.mouseX = (e.clientX - rect.left) / this.renderScale;
-    });
+  setupPointerDownListener(shouldRegisterPointerCallback) {
+    this.canvas.addEventListener('pointerdown',
+      (pointer) => {
+        // we only care about one input. discard any new ones
+        if (this.activePointerManager.hasActivePointer()) {
+          return;
+        }
+
+        // TODO(peter.xu) refactor scaling and unscaling by renderScale into helper method
+        const rect = this.canvas.getBoundingClientRect();
+        const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+        const pointerY = (pointer.pageY - rect.top) / this.renderScale;
+
+        if (!shouldRegisterPointerCallback(pointerX, pointerY)) {
+          return;
+        }
+
+        this.activePointerManager.addPointer(pointer);
+      },
+      false);
   }
 
-  setupMouseClickListener(callback) {
-    this.canvas.addEventListener('click', () => {
-      callback();
-    });
+  setupPointerMoveListener(callback) {
+    this.canvas.addEventListener('pointermove',
+      (pointer) => {
+        if (this.activePointerManager.isActivePointer(pointer)) {
+          const rect = this.canvas.getBoundingClientRect();
+          const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+          callback(pointerX);
+        }
+      },
+      false)
+  }
+
+  setupPointerEndListener(callback) {
+    this.canvas.addEventListener('pointerup',
+      (pointer) => {
+        if (this.activePointerManager.isActivePointer(pointer)) {
+          callback();
+          this.activePointerManager.clearActivePointer();
+        }
+      },
+      false)
+  }
+
+  setupPointerCancelListener() {
+    this.canvas.addEventListener('pointercancel',
+      (pointer) => {
+        if (this.activePointerManager.isActivePointer(pointer)) {
+          this.activePointerManager.clearActivePointer();
+        }
+      },
+      false)
   }
 
   #getCanvasWidth() {
