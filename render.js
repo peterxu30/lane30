@@ -434,6 +434,7 @@ export class Render {
   }
   
   draw(ball, pins, lane, frames, gameState) {
+    this.initialize(lane.width, lane.height, lane.gutterWidth);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawLane(lane);
     this.drawPins(pins);

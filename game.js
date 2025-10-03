@@ -261,8 +261,6 @@ class Game {
   }
 
   initialize() {
-    this.render.initialize(this.lane.width, this.lane.height, this.lane.gutterWidth);
-
     this.render.setupPointerDownListener(this.pointerDownCallback.bind(this));
     this.render.setupPointerMoveListener(this.pointerMoveCallback.bind(this));
     this.render.setupPointerEndListener(this.pointerEndCallback.bind(this));
@@ -397,7 +395,6 @@ class Game {
 
     self = this;
     function runHelper(timestamp) {
-      self.render.initialize(self.lane.width, self.lane.height, self.lane.gutterWidth);
       self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
       self.handleGameState(false)
