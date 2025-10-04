@@ -142,13 +142,13 @@ export class Render {
     // Resize scoreboard to match canvas width
     this.scoreboard.style.width = `${this.canvas.style.width}px`;
 
-    console.log(`Render initialization complete. 
-    available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
-    scaled canvas: ${this.canvas.width}x${this.canvas.height}, 
-    renderScale: ${this.renderScale},
-    widthRatio: ${widthRatio}, 
-    heightRatio: ${heightRatio},
-    devicePixelRatio: ${window.devicePixelRatio}`);
+    // console.log(`Render initialization complete. 
+    // available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
+    // scaled canvas: ${this.canvas.width}x${this.canvas.height}, 
+    // renderScale: ${this.renderScale},
+    // widthRatio: ${widthRatio}, 
+    // heightRatio: ${heightRatio},
+    // devicePixelRatio: ${window.devicePixelRatio}`);
   }
 
   /**
@@ -164,7 +164,7 @@ export class Render {
    * This fits "more canvas" into the same dimensions.
    */
   scalePPI(canvas, scaleFactor) {
-    console.log(`setting PPI with scaleFactor ${scaleFactor}`);
+    // console.log(`setting PPI with scaleFactor ${scaleFactor}`);
 
     // Set up CSS size.
     canvas.style.width = canvas.width + 'px';
@@ -434,6 +434,7 @@ export class Render {
   }
   
   draw(ball, pins, lane, frames, gameState) {
+    this.initialize(lane.width, lane.height, lane.gutterWidth);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawLane(lane);
     this.drawPins(pins);

@@ -261,8 +261,6 @@ class Game {
   }
 
   initialize() {
-    this.render.initialize(this.lane.width, this.lane.height, this.lane.gutterWidth);
-
     this.render.setupPointerDownListener(this.pointerDownCallback.bind(this));
     this.render.setupPointerMoveListener(this.pointerMoveCallback.bind(this));
     this.render.setupPointerEndListener(this.pointerEndCallback.bind(this));
