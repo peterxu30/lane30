@@ -140,7 +140,12 @@ export class Render {
     this.scalePPI(this.canvas, window.devicePixelRatio);
 
     // Resize scoreboard to match canvas width
-    this.scoreboard.style.width = `${this.canvas.style.width}px`;
+    // this.scoreboard.style.width = `${this.canvas.style.width}px`;
+
+    // TODO(peter.xu): Set scoreboard width to max(lane_width, scoreboard_min_width)
+    let scoreboardWidth = Math.max(parseInt(this.canvas.style.width, 10), 300);
+    this.scoreboard.style.width = `${scoreboardWidth}px`;
+    // console.log(this.scoreboard.style.width);
 
     // console.log(`Render initialization complete. 
     // available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
