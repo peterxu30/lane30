@@ -1,6 +1,5 @@
 // TODO 
 // P0
-// - control the ball via drag instead of click
 // - score should automatically update
 // - ball trajectory should be affected by pin collisions
 // - stop pin movement after a while
@@ -14,7 +13,7 @@
 //     - Tap transitions NEW_STATE -> FRAME_DONE and FRAME_DONE automatically transitions to NOT_RUNNING.
 //     - Still only one tap required to go from RUNNING to NOT_RUNNING
 // - Add new GameState for pins done moving - will also automatically update score
-// - Separate mouse click from game logic. RegisterClick() should have a switch for different game states
+// - Update and unify colors of title, ball, text etc.
 
 // P1
 // - hook mode - where you can control the ball as it moves
@@ -33,3 +32,4 @@
 // - restrict game engine refresh rate to 60hz - DONE
 // - need a flashy title graphic - "Lane 30 by PKING" - DONE
 // - Refactor scoring system to replace 'X' and '/' with numbers and move strike and spare display to render - DONE
+// - scoreboard-resizing - DONE
