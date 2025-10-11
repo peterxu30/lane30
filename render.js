@@ -24,6 +24,9 @@ const gameStateToRenderState = {
 const scoreboardRollsId = '#rolls';
 const scoreboardTotalsId = '#totals';
 
+// Scoreboard
+const minScoreboardWidth = 300;
+
 // Lane rendering
 const numBoards = 39;
 const laneFillColor = '#c49a6c';
@@ -140,12 +143,8 @@ export class Render {
     this.scalePPI(this.canvas, window.devicePixelRatio);
 
     // Resize scoreboard to match canvas width
-    // this.scoreboard.style.width = `${this.canvas.style.width}px`;
-
-    // TODO(peter.xu): Set scoreboard width to max(lane_width, scoreboard_min_width)
-    let scoreboardWidth = Math.max(parseInt(this.canvas.style.width, 10), 300);
+    let scoreboardWidth = Math.max(parseInt(this.canvas.style.width, 10), minScoreboardWidth);
     this.scoreboard.style.width = `${scoreboardWidth}px`;
-    // console.log(this.scoreboard.style.width);
 
     // console.log(`Render initialization complete. 
     // available canvas: ${availableCanvasWidth}x${availableCanvasHeight}, 
