@@ -10,14 +10,14 @@ const laneHeight = 683;
 const gutterWidth = 20;
 
 // Ball constants
-const ballSpeed = -8.4;
+const ballSpeed = -8.5;
 const ballRadius = 25;
-const ballMass = 6.5;
-const ballStartingYBuffer = 60; // distance from bottom of lane to ball starting position
+const ballMass = 7.5;
+const ballStartingYBuffer = 65; // distance from bottom of lane to ball starting position
 
 // Pin constants
-const pinRadius = 14;
-const pinMass = 2;
+const pinRadius = 14.5;
+const pinMass = 1;
 const numPinRows = 4;
 const pinSpacingX = 90; // horizontal spacing between pins
 const pinSpacingY = 50; // vertical spacing between rows
