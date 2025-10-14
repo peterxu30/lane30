@@ -53,14 +53,6 @@ export class Engine {
       p.vx *= tickAcceleration;
       p.vy *= tickAcceleration;
 
-      // testing stopping the pins
-      // var beforeVx = p.vx;
-      // var decimalPlaces = 22;
-      // var decimalNumber = Math.pow(10, decimalPlaces);
-      // p.vx = -1 * Math.abs(Math.ceil(p.vx * decimalNumber) / decimalNumber);
-      // p.vy = -1 * Math.abs(Math.ceil(p.vy * decimalNumber) / decimalNumber);
-      // console.log(`Pin ${p.id} vx: ${beforeVx} -> ${p.vx}, vy: ${p.vy}`);
-
       // check gutters/out
       if (
         p.x < lane.x ||
@@ -75,12 +67,22 @@ export class Engine {
     });
 
     // Round pin speed
-    // pins.forEach(p => {
-    //   let roundedPinVx = Math.trunc(p.vx*1000) / 1000;
-    //   let roundedPinYx = Math.trunc(p.vy*1000) / 1000;
-    //   p.vx = roundedPinVx;
-    //   p.vy = roundedPinYx;
-    // })
+    pins.forEach(p => {
+      let unroundedPinVx = p.vx;
+      let unroundedPinVy = p.vy;
+      
+      let roundValue = 3;
+      let rounder = 10 ** roundValue;
+
+      let roundedPinVx = Math.trunc(p.vx*rounder) / rounder;
+      let roundedPinYx = Math.trunc(p.vy*rounder) / rounder;
+      p.vx = roundedPinVx;
+      p.vy = roundedPinYx;
+
+      if (p.active && p.vx != 0 && p.vy != 0) {
+        console.log(`Pin ${p.id} vx: ${unroundedPinVx} vy: ${unroundedPinVy} -> vx: ${p.vx} vy: ${p.vy}`);
+      }
+    })
   }
 
   resolveCollision(a, b, tickModifierRatio) {
