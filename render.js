@@ -1,4 +1,4 @@
-import { GameStates } from './constants.js';
+import { GameStates } from './game-states.js';
 import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 

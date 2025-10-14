@@ -1,4 +1,4 @@
-import { GameStates } from './constants.js';
+import { GameStates } from './game-states.js';
 import { Engine } from './engine.js';
 import { Render } from './render.js';
 import { Ticker } from './ticker.js';
@@ -319,7 +319,9 @@ class Game {
         
         // TODO(peter.xu) This doesn't feel good, it can be a very slow or very quick transition depending on the roll
         // const pinsStoppedMoving = this.pins.every(p => p.vx === 0 && p.vy === 0);
-        // if ((ballOutOfLane && pinsStoppedMoving) || (ballOutOfLane && isUserInput)) {
+        // const allPinsHit = this.pins.every(p => p.hit);
+        // const allPinsComplete = pinsStoppedMoving || allPinsHit;
+        // if ((ballOutOfLane && allPinsComplete) || (ballOutOfLane && isUserInput)) {
         //   this.gameState = GameStates.FRAME_DONE;
         // }
 
