@@ -78,10 +78,6 @@ export class Engine {
       let roundedPinYx = Math.trunc(p.vy*rounder) / rounder;
       p.vx = roundedPinVx;
       p.vy = roundedPinYx;
-
-      if (p.active && p.vx != 0 && p.vy != 0) {
-        console.log(`Pin ${p.id} vx: ${unroundedPinVx} vy: ${unroundedPinVy} -> vx: ${p.vx} vy: ${p.vy}`);
-      }
     })
   }
 
