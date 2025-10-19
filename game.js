@@ -46,7 +46,7 @@ class Game {
     this.ticker = new Ticker(60); // responsible for maintaining a fixed refresh rate
 
     // Game objects
-    this.currentFrame = 0;
+    this.currentFrame = 9;
     this.rollInFrame = 0;
     this.frames = this.buildFrames();
     
@@ -142,7 +142,7 @@ class Game {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
   }
 
-  // handleRoll calculates points and advances the roll and frame.
+  // handleRoll calculates points and advances the roll and frame. Returns a boolean for whether to reset pins or not.
   handleRoll() {
     let pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
     this.pins.forEach(p => { (p.hit) ? p.scored = true : p.scored = false; });
@@ -348,21 +348,19 @@ class Game {
         
         let shouldResetPins = this.handleRoll(this.pins);
         this.gameState = GameStates.NOT_RUNNING;
-        if (shouldResetPins) {
-          // No more rolls left in frame
-
-          // Clicking again should start a new game.
-          if (this.isGameOver()) {
-            // No more frames left in game
-            this.gameState = GameStates.OVER;
-          } else {
+        if (this.isGameOver()) {
+          // No more frames left in game
+          this.gameState = GameStates.OVER;
+        } else {
+          if (shouldResetPins) {
+            // No more rolls left in frame
             // Reset lane for next frame
             this.resetLane(); // unclear that this also resets ball
+          } else {
+            // Still has rolls left in frame
+            this.clearHitPins();
+            this.resetBall();
           }
-        } else {
-          // Still has rolls left in frame
-          this.clearHitPins();
-          this.resetBall();
         }
 
         break;
