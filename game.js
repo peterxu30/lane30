@@ -46,7 +46,7 @@ class Game {
     this.ticker = new Ticker(60); // responsible for maintaining a fixed refresh rate
 
     // Game objects
-    this.currentFrame = 9;
+    this.currentFrame = 0;
     this.rollInFrame = 0;
     this.frames = this.buildFrames();
     
