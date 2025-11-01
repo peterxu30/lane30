@@ -346,7 +346,7 @@ class Game {
           break;
         }
         
-        let shouldResetPins = this.handleRoll(this.pins);
+        let shouldResetPins = this.handleRoll();
         this.gameState = GameStates.NOT_RUNNING;
         if (this.isGameOver()) {
           // No more frames left in game
