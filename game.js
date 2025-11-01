@@ -138,34 +138,33 @@ class Game {
     this.gameState = GameStates.RUNNING;
   }
 
-  isStrike() {
-    const pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
-    return pinsHit === 10 && this.rollInFrame === 0;
-  }
-
   clearHitPins() {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
   }
 
-  // handleRoll calculates points and advances the roll and frame.
-  // TODO(peter.xu) Refactor this
-  // handleRoll should return whether to reset lane or not
+  // handleRoll calculates points and advances the roll and frame. Returns a boolean for whether to reset pins or not.
   handleRoll() {
-    const pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
+    let pinsHit = this.pins.filter(p => p.hit && !p.scored).length;
     this.pins.forEach(p => { (p.hit) ? p.scored = true : p.scored = false; });
 
-    const frame = this.frames[this.currentFrame];
+    let frame = this.frames[this.currentFrame];
 
     if (this.currentFrame >= 10) {
-      return;
+      return true;
     }
+
+    let shouldResetPins = false; 
 
     // 10th frame special logic
     if (this.currentFrame === 9) {
       if (this.rollInFrame === 0) {
+        // first throw
         frame.roll1 = pinsHit;
         this.rollInFrame = 1;
+
+        shouldResetPins = util.frameTenFirstRollIsStrike(frame);
       } else if (this.rollInFrame === 1) {
+        // second throw
         if (!util.frameIsStrike(frame) && (frame.roll1 + pinsHit === 10)) {
           frame.roll2 = 10 - frame.roll1; // spare
         } else {
@@ -173,15 +172,20 @@ class Game {
         }
 
         if (util.frameIsStrike(frame) || util.frameIsSpare(frame)) {
+          // one more
           this.rollInFrame = 2;
         } else {
+          // frame is over
           this.currentFrame++;
           this.rollInFrame = 5; // filler value
         }
+
+        shouldResetPins =  util.frameTenSecondRollIsStrike(frame) || util.frameTenSecondRollIsSpare(frame);
       } else if (this.rollInFrame === 2) {
         frame.roll3 = pinsHit;
         this.currentFrame++;
         this.rollInFrame = 5; // filler value
+        shouldResetPins =  true;
       }
     } else {
       // Frames 1-9
@@ -189,8 +193,10 @@ class Game {
         frame.roll1 = pinsHit;
         if (util.frameIsStrike(frame)) {
           this.currentFrame++;
+          shouldResetPins =  true;
         } else {
           this.rollInFrame = 1;
+          shouldResetPins =  false;
         }
       } else {
         if (!util.frameIsStrike(frame) && (frame.roll1 + pinsHit === 10)) {
@@ -200,10 +206,12 @@ class Game {
         }
         this.currentFrame++;
         this.rollInFrame = 0;
+        shouldResetPins =  true;
       }
     }
 
     this.calculateCumulative();
+    return shouldResetPins;
   }
 
   calculateCumulative() {
@@ -294,8 +302,6 @@ class Game {
     this.handleGameState(true);
   }
 
-  // Mouse drag press should only move the ball horizontally, not advance game states or do anything else
-  // function should take in a boolean isUserInput and various states that are automatic ignore the input
   handleGameState(isUserInput) {
     let previousGameState = this.gameState; // logging
 
@@ -339,34 +345,24 @@ class Game {
         if (isUserInput) {
           break;
         }
-
-        // TODO(peter.xu) This logic is a duplicate of handleRoll. Need to consolidate. handleRoll should tell us
-        // whether to reset the pins or not.
-        let previousRollInFrame = this.rollInFrame;
-        let previousFrameIsStrike = this.isStrike(this.pins);
         
-        if (previousFrameIsStrike) {
-          console.log("IS STRIKE");
-        }
-        
-        this.handleRoll(this.pins);
+        let shouldResetPins = this.handleRoll(this.pins);
         this.gameState = GameStates.NOT_RUNNING;
-        if (previousRollInFrame === 0 && !previousFrameIsStrike) {
-          // Still has rolls left in frame
-          this.clearHitPins();
-          this.resetBall();
+        if (this.isGameOver()) {
+          // No more frames left in game
+          this.gameState = GameStates.OVER;
         } else {
-          // No more rolls left in frame
-
-          // Clicking again should start a new game.
-          if (this.isGameOver()) {
-            // No more frames left in game
-            this.gameState = GameStates.OVER;
-          } else {
+          if (shouldResetPins) {
+            // No more rolls left in frame
             // Reset lane for next frame
             this.resetLane(); // unclear that this also resets ball
+          } else {
+            // Still has rolls left in frame
+            this.clearHitPins();
+            this.resetBall();
           }
         }
+
         break;
       case GameStates.OVER:
         // OVER means the last roll of the tenth frame has happened.
@@ -386,9 +382,6 @@ class Game {
   }
 
   isGameOver() {
-    if (this.currentFrame >= 10) {
-      console.log("game is over");
-    }
     return this.currentFrame >= 10;
   }
 
