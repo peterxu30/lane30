@@ -1,6 +1,6 @@
 import { GameStates } from './game-states.js';
 import { Engine } from './engine.js';
-import { Render } from './render.js';
+import { Render, RenderStates } from './render.js';
 import { Ticker } from './ticker.js';
 import * as util from './util.js';
 
@@ -75,6 +75,7 @@ class Game {
 
     // initial game state
     this.gameState = GameStates.INITIALIZED;
+    this.renderState = RenderStates.INITIALIZED;
   }
 
   #getLaneCenterX(laneStartingX, laneWidth, gutterWidth) {
@@ -322,6 +323,8 @@ class Game {
       case GameStates.RUNNING:
         // Check that pins are moving
         const ballOutOfLane = (this.ball.y + this.ball.r < this.lane.y);
+
+        const ballOutOfLaneWithDelay = (this.ball.y + this.ball.r < this.lane.y - 400);
         
         // TODO(peter.xu) This doesn't feel good, it can be a very slow or very quick transition depending on the roll
         // const pinsStoppedMoving = this.pins.every(p => p.vx === 0 && p.vy === 0);
@@ -331,7 +334,18 @@ class Game {
         //   this.gameState = GameStates.FRAME_DONE;
         // }
 
-        if (ballOutOfLane && isUserInput) {
+        // if (ballOutOfLane) {
+        //   this.renderState = RenderStates.BALL_RETURN;
+        //   if (isUserInput) {
+        //     this.gameState = GameStates.FRAME_DONE;
+        //   }
+        // }
+        
+        if (ballOutOfLaneWithDelay) {
+          this.renderState = RenderStates.BALL_RETURN;
+        }
+
+        if (ballOutOfLaneWithDelay && isUserInput) {
           this.gameState = GameStates.FRAME_DONE;
         }
         break;
@@ -376,6 +390,21 @@ class Game {
         break;
     }
 
+    // Update renderState based on gameState mapping
+    if (this.gameState === GameStates.INITIALIZED) {
+      this.renderState = RenderStates.INITIALIZED;
+    } else if (this.gameState === GameStates.OVER) {
+      this.renderState = RenderStates.OVER;
+    } else if (this.gameState === GameStates.RUNNING) {
+      // Only set to RUNNING if ball is not out of lane (BALL_RETURN is set in the RUNNING case above)
+      if (!(this.ball.y + this.ball.r < this.lane.y)) {
+        this.renderState = RenderStates.RUNNING;
+      }
+    } else {
+      // For all other GameStates without RenderState mappings, set to RUNNING
+      this.renderState = RenderStates.RUNNING;
+    }
+
     if (previousGameState != this.gameState) {
       console.log(`Switching from ${previousGameState.description} to ${this.gameState.description}. isUserInput: ${isUserInput}`);
     }
@@ -391,7 +420,7 @@ class Game {
     self = this;
     function runHelper(timestamp) {
       self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
-      self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
+      self.render.draw(self.ball, self.pins, self.lane, self.frames, self.renderState);
       self.handleGameState(false)
       window.requestAnimationFrame(runHelper); // recursive call
     }
