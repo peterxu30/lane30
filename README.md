@@ -15,6 +15,20 @@ Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 
 # Testing
 
+## Unit tests
+### Install dependencies first
+`npm install`
+
+### Run tests in watch mode
+`npm test`
+
+### Run tests once
+`npm run test:run`
+
+### Run with coverage report
+`npm run test:coverage`
+
+## Run instructions
 1. Run `python3 -m http.server 8000 -d ./` from project directory.
 2. Open `http://[::]:8000/` in browser.
 
