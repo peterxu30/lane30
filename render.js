@@ -58,6 +58,7 @@ const gameNotStartedTitleFontSize = 21.7;
 const gameNotStartedSubtitleFontSize = 18;
 const gameOverTitleFontSize = 49;
 const gameOverSubtitleFontSize = 18;
+const ballReturnSubtitleFontSize = 23;
 
 // Copy font style and type
 const fontStyle = "bold";
@@ -430,7 +431,7 @@ export class Render {
   writeBallReturnText() {
     this.ctx.textAlign = 'center';
 
-    const adjustedSubtitleFontSize = gameOverSubtitleFontSize * this.renderScale;
+    const adjustedSubtitleFontSize = ballReturnSubtitleFontSize * this.renderScale;
 
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;

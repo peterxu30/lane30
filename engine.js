@@ -13,13 +13,6 @@ export class Engine {
 
     // Ball movement
     if (ball.rolling) {
-      // disable mouse control for now
-      // if (mouseX != null) {
-      //   const minX = lane.x + ball.r;
-      //   const maxX = lane.x + lane.width - ball.r;
-      //   const targetX = Math.max(minX, Math.min(maxX, mouseX));
-      //   ball.x += (targetX - ball.x) * 0.18;
-      // }
       ball.y += ball.vy * tickModifierRatio;
     }
 
@@ -36,12 +29,6 @@ export class Engine {
         }
       }
     }
-
-    // TODO(peter.xu) Maybe bring horizontal ball movement back
-    // if (ball.rolling) {
-    //   ball.x += ball.vx;
-    //   ball.vx *= 1 - (0.02 * tickModifierRatio);
-    // }
 
     // Move pins
     pins.forEach(p => {
@@ -67,10 +54,7 @@ export class Engine {
     });
 
     // Round pin speed
-    pins.forEach(p => {
-      let unroundedPinVx = p.vx;
-      let unroundedPinVy = p.vy;
-      
+    pins.forEach(p => {      
       let roundValue = 3;
       let rounder = 10 ** roundValue;
 

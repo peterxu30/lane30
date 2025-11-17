@@ -323,29 +323,28 @@ class Game {
       case GameStates.RUNNING:
         // Check that pins are moving
         const ballOutOfLane = (this.ball.y + this.ball.r < this.lane.y);
+        const ballOutOfLaneWithDelay = (this.ball.y + this.ball.r < this.lane.y - 550);
 
-        const ballOutOfLaneWithDelay = (this.ball.y + this.ball.r < this.lane.y - 400);
-        
-        // TODO(peter.xu) This doesn't feel good, it can be a very slow or very quick transition depending on the roll
-        // const pinsStoppedMoving = this.pins.every(p => p.vx === 0 && p.vy === 0);
-        // const allPinsHit = this.pins.every(p => p.hit);
-        // const allPinsComplete = pinsStoppedMoving || allPinsHit;
-        // if ((ballOutOfLane && allPinsComplete) || (ballOutOfLane && isUserInput)) {
-        //   this.gameState = GameStates.FRAME_DONE;
-        // }
+        const noMovingPinsWithinLane = this.pins.every(
+          p => p.active
+        );
 
-        // if (ballOutOfLane) {
-        //   this.renderState = RenderStates.BALL_RETURN;
-        //   if (isUserInput) {
-        //     this.gameState = GameStates.FRAME_DONE;
-        //   }
-        // }
+        const allPinsComplete = this.pins.every(p =>
+          !p.active || // pin out of bounds, can't hit anything anymore
+          (
+            // pin not hit and cannot no longer be hit by either ball or other pins
+            !p.hit &&
+            p.active &&
+            ballOutOfLane &&
+            noMovingPinsWithinLane
+          )
+        );
         
-        if (ballOutOfLaneWithDelay) {
+        if (ballOutOfLaneWithDelay || allPinsComplete) {
           this.renderState = RenderStates.BALL_RETURN;
         }
 
-        if (ballOutOfLaneWithDelay && isUserInput) {
+        if (ballOutOfLane && isUserInput) {
           this.gameState = GameStates.FRAME_DONE;
         }
         break;

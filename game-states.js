@@ -26,5 +26,4 @@ export const GameStates = Object.freeze({
   RUNNING:   Symbol("running"), // ball is moving and on screen
   FRAME_DONE: Symbol("frame_done"), // ball of screen, pins finished moving
   OVER:  Symbol("over"), // game is over, ten frames have been bowled 
-  RESTART: Symbol("restart") // starting a new game // NOT USED
 });
