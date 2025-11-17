@@ -49,7 +49,7 @@ const gameOverTitle = "NICE GAME";
 const gameOverSubtitle = "Tap to start new game";
 const gameNotStartedTitle = "PKING 30th Anniversary Edition";
 const gameNotStartedSubtitle = "Drag ball left and right to aim";
-const gameNotStartedSecondSubtitle = "Tap to return ball";
+const returnBallText = "Tap to return ball";
 const scoreboardStrike = 'X';
 const scoreboardSpare = '/';
 
@@ -407,7 +407,7 @@ export class Render {
 
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtext2Y = textY + textHeight * 3.4;
-    this.ctx.fillText(gameNotStartedSecondSubtitle, textX, subtext2Y); 
+    this.ctx.fillText(returnBallText, textX, subtext2Y); 
   }
 
   writeGameOverText() {
@@ -436,7 +436,7 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText("Tap to get ball back", textX, textY); 
+    this.ctx.fillText(returnBallText, textX, textY); 
   }
 
   writeTextForGameState(renderState) {
