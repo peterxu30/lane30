@@ -313,6 +313,8 @@ class Game {
           break;
         }
       case GameStates.NOT_RUNNING:
+        this.renderState = RenderStates.RUNNING;
+
         if (!isUserInput) {
           break;
         }
@@ -354,6 +356,7 @@ class Game {
         // If first roll of frame and no strike: reset ball and remove hit pins, leave remaining pins on lane
         // If first roll of frame and strike: reset ball and reset pins to full set
         // If second roll of frame: reset ball and reset pins to full set
+        this.renderState = RenderStates.RUNNING;
         
         if (isUserInput) {
           break;
@@ -380,6 +383,8 @@ class Game {
       case GameStates.OVER:
         // OVER means the last roll of the tenth frame has happened.
         // Reset the game and wait for player to start again.
+        this.renderState = RenderStates.OVER;
+
         if (!isUserInput) {
           break;
         }
@@ -387,21 +392,6 @@ class Game {
         this.resetGame();
         this.gameState = GameStates.NOT_RUNNING;
         break;
-    }
-
-    // Update renderState based on gameState mapping
-    if (this.gameState === GameStates.INITIALIZED) {
-      this.renderState = RenderStates.INITIALIZED;
-    } else if (this.gameState === GameStates.OVER) {
-      this.renderState = RenderStates.OVER;
-    } else if (this.gameState === GameStates.RUNNING) {
-      // Only set to RUNNING if ball is not out of lane (BALL_RETURN is set in the RUNNING case above)
-      if (!(this.ball.y + this.ball.r < this.lane.y)) {
-        this.renderState = RenderStates.RUNNING;
-      }
-    } else {
-      // For all other GameStates without RenderState mappings, set to RUNNING
-      this.renderState = RenderStates.RUNNING;
     }
 
     if (previousGameState != this.gameState) {
