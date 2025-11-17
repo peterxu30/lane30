@@ -325,10 +325,16 @@ class Game {
       case GameStates.RUNNING:
         // Check that pins are moving
         const ballOutOfLane = (this.ball.y + this.ball.r < this.lane.y);
-        const ballOutOfLaneWithDelay = (this.ball.y + this.ball.r < this.lane.y - 550);
+        const ballOutOfLaneWithDelay = (this.ball.y + this.ball.r < this.lane.y - 525);
 
         const noMovingPinsWithinLane = this.pins.every(
-          p => p.active
+          p => {
+            if (p.active) {
+              return p.vx === 0 && p.vy === 0;
+            } else {
+              return true;
+            }
+          }
         );
 
         const allPinsComplete = this.pins.every(p =>
