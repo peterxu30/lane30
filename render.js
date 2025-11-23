@@ -1,4 +1,3 @@
-import { GameStates } from './game-states.js';
 import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 
@@ -11,15 +10,6 @@ export const RenderStates = Object.freeze({
   OVER: Symbol("over"),
   BALL_RETURN: Symbol("ball_return")
 });
-
-/**
- * GameStateToRenderState maps the game state to the render state.
- */
-const gameStateToRenderState = {
-  [GameStates.INITIALIZED]: RenderStates.INITIALIZED,
-  [GameStates.RUNNING]: RenderStates.RUNNING, // unused
-  [GameStates.OVER]: RenderStates.OVER
-};
 
 // Scoreboard HTML elements
 const scoreboardRollsId = '#rolls';
