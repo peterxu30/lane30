@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameStates } from './game-states.js';
+import { RenderStates } from './render.js';
 
 // Setup DOM mocks before importing Game
 const mockTitle = { style: {} };
@@ -93,6 +94,7 @@ describe('Game', () => {
       expect(game.currentFrame).toBe(0);
       expect(game.rollInFrame).toBe(0);
       expect(game.gameState).toBe(GameStates.INITIALIZED);
+      expect(game.renderState).toBe(RenderStates.INITIALIZED);
       expect(game.frames).toHaveLength(10);
     });
 
@@ -460,6 +462,76 @@ describe('Game', () => {
       
       expect(game.pins[0].active).toBe(false);
       expect(game.pins[1].active).toBe(true);
+    });
+  });
+
+  describe('handleGameState renderState updates', () => {
+    it('should set renderState to RUNNING when gameState is INITIALIZED with user input', () => {
+      game.gameState = GameStates.INITIALIZED;
+      game.renderState = RenderStates.INITIALIZED; // Set to something different first
+      
+      game.handleGameState(true);
+      
+      // INITIALIZED falls through to NOT_RUNNING which sets renderState to RUNNING
+      expect(game.renderState).toBe(RenderStates.RUNNING);
+    });
+
+    it('should set renderState to OVER when gameState is OVER', () => {
+      game.gameState = GameStates.OVER;
+      game.renderState = RenderStates.RUNNING; // Set to something different first
+      
+      game.handleGameState(false);
+      
+      expect(game.renderState).toBe(RenderStates.OVER);
+    });
+
+    it('should set renderState to RUNNING when gameState is NOT_RUNNING', () => {
+      game.gameState = GameStates.NOT_RUNNING;
+      game.renderState = RenderStates.INITIALIZED; // Set to something different first
+      
+      game.handleGameState(false);
+      
+      expect(game.renderState).toBe(RenderStates.RUNNING);
+    });
+
+    it('should set renderState to RUNNING when gameState is FRAME_DONE', () => {
+      game.gameState = GameStates.FRAME_DONE;
+      game.renderState = RenderStates.INITIALIZED; // Set to something different first
+      
+      game.handleGameState(false);
+      
+      expect(game.renderState).toBe(RenderStates.RUNNING);
+    });
+
+    it('should set renderState to BALL_RETURN when ball is out of lane with delay in RUNNING state', () => {
+      game.gameState = GameStates.RUNNING;
+      game.ball.y = -600; // Ball is way out of lane (y + r < lane.y - 525)
+      game.ball.r = 25;
+      game.lane.y = 0;
+      game.renderState = RenderStates.RUNNING; // Set to something different first
+      
+      game.handleGameState(false);
+      
+      expect(game.renderState).toBe(RenderStates.BALL_RETURN);
+    });
+
+    it('should set renderState to BALL_RETURN when all pins are complete in RUNNING state', () => {
+      game.gameState = GameStates.RUNNING;
+      game.ball.y = -100; // Ball is out of lane
+      game.ball.r = 25;
+      game.lane.y = 0;
+      // Set all pins to inactive or not hit and not moving
+      game.pins.forEach(p => {
+        p.active = false;
+        p.hit = false;
+        p.vx = 0;
+        p.vy = 0;
+      });
+      game.renderState = RenderStates.RUNNING; // Set to something different first
+      
+      game.handleGameState(false);
+      
+      expect(game.renderState).toBe(RenderStates.BALL_RETURN);
     });
   });
 });

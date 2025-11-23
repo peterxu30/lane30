@@ -1,24 +1,15 @@
-import { GameStates } from './game-states.js';
 import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 
 /**
  * RenderStates represents the possible states of the render.
  */
-const RenderStates = Object.freeze({
+export const RenderStates = Object.freeze({
   INITIALIZED: Symbol("initialized"),
   RUNNING: Symbol("running"),
-  OVER: Symbol("over")
+  OVER: Symbol("over"),
+  BALL_RETURN: Symbol("ball_return")
 });
-
-/**
- * GameStateToRenderState maps the game state to the render state.
- */
-const gameStateToRenderState = {
-  [GameStates.INITIALIZED]: RenderStates.INITIALIZED,
-  [GameStates.RUNNING]: RenderStates.RUNNING, // unused
-  [GameStates.OVER]: RenderStates.OVER
-};
 
 // Scoreboard HTML elements
 const scoreboardRollsId = '#rolls';
@@ -48,7 +39,7 @@ const gameOverTitle = "NICE GAME";
 const gameOverSubtitle = "Tap to start new game";
 const gameNotStartedTitle = "PKING 30th Anniversary Edition";
 const gameNotStartedSubtitle = "Drag ball left and right to aim";
-const gameNotStartedSecondSubtitle = "Tap to return ball";
+const returnBallText = "Tap to return ball";
 const scoreboardStrike = 'X';
 const scoreboardSpare = '/';
 
@@ -57,6 +48,7 @@ const gameNotStartedTitleFontSize = 21.7;
 const gameNotStartedSubtitleFontSize = 18;
 const gameOverTitleFontSize = 49;
 const gameOverSubtitleFontSize = 18;
+const ballReturnSubtitleFontSize = 23;
 
 // Copy font style and type
 const fontStyle = "bold";
@@ -405,7 +397,7 @@ export class Render {
 
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtext2Y = textY + textHeight * 3.4;
-    this.ctx.fillText(gameNotStartedSecondSubtitle, textX, subtext2Y); 
+    this.ctx.fillText(returnBallText, textX, subtext2Y); 
   }
 
   writeGameOverText() {
@@ -426,24 +418,38 @@ export class Render {
     this.ctx.fillText(gameOverSubtitle, textX, subtextY); 
   }
 
-  writeTextForGameState(gameState) {
-    switch (gameStateToRenderState[gameState]) {
+  writeBallReturnText() {
+    this.ctx.textAlign = 'center';
+
+    const adjustedSubtitleFontSize = ballReturnSubtitleFontSize * this.renderScale;
+
+    this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
+    const textX = this.#getCanvasWidth() / 2;
+    const textY = this.#getCanvasHeight() / 2.5;
+    this.ctx.fillText(returnBallText, textX, textY); 
+  }
+
+  writeTextForGameState(renderState) {
+    switch (renderState) {
       case RenderStates.INITIALIZED:
         this.writeGameNotStartedText();
         break;
       case RenderStates.OVER:
         this.writeGameOverText();
         break;
+      case RenderStates.BALL_RETURN:
+        this.writeBallReturnText();
+        break;
     }
   }
   
-  draw(ball, pins, lane, frames, gameState) {
+  draw(ball, pins, lane, frames, renderState) {
     this.initialize(lane.width, lane.height, lane.gutterWidth);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawLane(lane);
     this.drawPins(pins);
     this.drawBall(ball);
     this.updateScoreboard(frames);
-    this.writeTextForGameState(gameState);
+    this.writeTextForGameState(renderState);
   }
 }

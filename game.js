@@ -1,6 +1,6 @@
 import { GameStates } from './game-states.js';
 import { Engine } from './engine.js';
-import { Render } from './render.js';
+import { Render, RenderStates } from './render.js';
 import { Ticker } from './ticker.js';
 import * as util from './util.js';
 
@@ -75,6 +75,7 @@ class Game {
 
     // initial game state
     this.gameState = GameStates.INITIALIZED;
+    this.renderState = RenderStates.INITIALIZED;
   }
 
   #getLaneCenterX(laneStartingX, laneWidth, gutterWidth) {
@@ -312,6 +313,8 @@ class Game {
           break;
         }
       case GameStates.NOT_RUNNING:
+        this.renderState = RenderStates.RUNNING;
+
         if (!isUserInput) {
           break;
         }
@@ -322,14 +325,32 @@ class Game {
       case GameStates.RUNNING:
         // Check that pins are moving
         const ballOutOfLane = (this.ball.y + this.ball.r < this.lane.y);
+        const ballOutOfLaneWithDelay = (this.ball.y + this.ball.r < this.lane.y - 525);
+
+        const noMovingPinsWithinLane = this.pins.every(
+          p => {
+            if (p.active) {
+              return p.vx === 0 && p.vy === 0;
+            } else {
+              return true;
+            }
+          }
+        );
+
+        const allPinsComplete = this.pins.every(p =>
+          !p.active || // pin out of bounds, can't hit anything anymore
+          (
+            // pin not hit and cannot no longer be hit by either ball or other pins
+            !p.hit &&
+            p.active &&
+            ballOutOfLane &&
+            noMovingPinsWithinLane
+          )
+        );
         
-        // TODO(peter.xu) This doesn't feel good, it can be a very slow or very quick transition depending on the roll
-        // const pinsStoppedMoving = this.pins.every(p => p.vx === 0 && p.vy === 0);
-        // const allPinsHit = this.pins.every(p => p.hit);
-        // const allPinsComplete = pinsStoppedMoving || allPinsHit;
-        // if ((ballOutOfLane && allPinsComplete) || (ballOutOfLane && isUserInput)) {
-        //   this.gameState = GameStates.FRAME_DONE;
-        // }
+        if (ballOutOfLaneWithDelay || allPinsComplete) {
+          this.renderState = RenderStates.BALL_RETURN;
+        }
 
         if (ballOutOfLane && isUserInput) {
           this.gameState = GameStates.FRAME_DONE;
@@ -341,6 +362,7 @@ class Game {
         // If first roll of frame and no strike: reset ball and remove hit pins, leave remaining pins on lane
         // If first roll of frame and strike: reset ball and reset pins to full set
         // If second roll of frame: reset ball and reset pins to full set
+        this.renderState = RenderStates.RUNNING;
         
         if (isUserInput) {
           break;
@@ -367,6 +389,8 @@ class Game {
       case GameStates.OVER:
         // OVER means the last roll of the tenth frame has happened.
         // Reset the game and wait for player to start again.
+        this.renderState = RenderStates.OVER;
+
         if (!isUserInput) {
           break;
         }
@@ -391,7 +415,7 @@ class Game {
     self = this;
     function runHelper(timestamp) {
       self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
-      self.render.draw(self.ball, self.pins, self.lane, self.frames, self.gameState);
+      self.render.draw(self.ball, self.pins, self.lane, self.frames, self.renderState);
       self.handleGameState(false)
       window.requestAnimationFrame(runHelper); // recursive call
     }

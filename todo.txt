@@ -1,22 +1,13 @@
 // TODO 
 // P0
-// - Add new GameState for BallReturn when ball has left the top of the screen to display "Tap to get ball back"
-//     - this will be game state to display nice job message 
-//     - this will be between RUNNING and FRAME_DONE. Automatically transition from RUNNING -> NEW_STATE when ball has left play
-//     - NEW_STATE displays text
-//     - Tap transitions NEW_STATE -> FRAME_DONE and FRAME_DONE automatically transitions to NOT_RUNNING.
-//     - Still only gone tap required to go from RUNNING to NOT_RUNNING
 // - Update and unify colors of title, ball, text etc.
-// - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger?
-// - reset lane when all hit active pins velocity is zero
-// - ball trajectory should be affected by pin collisions
-// - Add new GameState for pins done moving - will also automatically update score
 
 // P1
 // - hook mode - where you can control the ball as it moves
 // - auto reset the ball after it leaves the lane instead of requiring user to click
 // - score should automatically update
 // - Print on screen the actual available canvas dimensions on physical iPhone because Chrome URL bar eats into available screen space
+// - ball trajectory should be affected by pin collisions
 
 // DONE
 // - flip orientation of pins - DONE
@@ -33,3 +24,5 @@
 // - Refactor scoring system to replace 'X' and '/' with numbers and move strike and spare display to render - DONE
 // - scoreboard-resizing - DONE
 // - stop pin movement after a while - DONE
+// - Add new GameState for BallReturn when ball has left the top of the screen to display "Tap to return ball" - DONE
+// - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger? - DONE
