@@ -1,6 +1,5 @@
 // TODO 
 // P0
-// - Update and unify colors of title, ball, text etc.
 
 // P1
 // - hook mode - where you can control the ball as it moves
@@ -26,3 +25,4 @@
 // - stop pin movement after a while - DONE
 // - Add new GameState for BallReturn when ball has left the top of the screen to display "Tap to return ball" - DONE
 // - The game is actually really difficult on mobile. Maybe increase ball mass, size, or speed? Maybe make pins bigger? - DONE
+// - Update and unify colors of title, ball, text etc. - DONE
