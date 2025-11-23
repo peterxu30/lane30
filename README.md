@@ -12,6 +12,7 @@ Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 - Dynamic screen scaling: The game maintains the same aspect ratio regardless of device dimensions.
 - Dynamic resolution scaling: The game maintains the same visual fidelity (PPI) regardless of device resolution.
 - Fixed refresh rate: The game maintains a constant tick rate regardless of device screen refresh rate while keeping screen refresh rate unlocked.
+- Touch actions on mobile devices and mouse input on computers.
 
 # Testing
 
