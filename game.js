@@ -34,14 +34,14 @@ const pinBaseYBuffer = 20; // distance from top of lane to first row of pins
  * Game physics is handled independently of screen size for consistency.
  */
 class Game {
-  constructor() {
+  constructor(gameMode) {
     // HTML Components
     this.title = document.getElementById('title');
     this.scoreboard = document.getElementById('scoreboard');
     this.canvas = document.getElementById('lane');
 
     // Game mode
-    this.gameMode = GameMode.MIGA;
+    this.gameMode = gameMode;
 
     // Core components
     this.engine = new Engine(this.gameMode);

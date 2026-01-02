@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Engine } from './engine.js';
+import { GameMode } from './game-states.js';
 
 describe('Engine', () => {
   let engine;
@@ -8,7 +9,7 @@ describe('Engine', () => {
   let lane;
 
   beforeEach(() => {
-    engine = new Engine();
+    engine = new Engine(GameMode.NORMAL);
     ball = {
       x: 175,
       y: 600,
@@ -133,6 +134,18 @@ describe('Engine', () => {
       expect(pins[0].x).toBe(initialX);
       expect(pins[0].y).toBe(initialY);
     });
+
+    it('should not apply horizontal movement from migaMode in NORMAL mode', () => {
+      // In NORMAL mode, pins should not have horizontal movement from migaMode
+      pins[0].vx = 0;
+      pins[0].vy = 0;
+      const initialVx = pins[0].vx;
+      
+      engine.update(ball, pins, lane, 16.67);
+      
+      // vx should remain 0 (no migaMode horizontal movement)
+      expect(pins[0].vx).toBe(initialVx);
+    });
   });
 
   describe('resolveCollision', () => {
@@ -241,6 +254,206 @@ describe('Engine', () => {
       engine.update(ball, pins, lane, 16.67);
       
       expect(pins[1].x).toBe(initialX);
+    });
+  });
+
+  describe('constructor', () => {
+    it('should initialize with NORMAL mode deceleration', () => {
+      const normalEngine = new Engine(GameMode.NORMAL);
+      expect(normalEngine.deceleration).toBe(0.01);
+    });
+  });
+
+  describe('MIGA mode', () => {
+    let migaEngine;
+    let migaPins;
+    let migaLane;
+
+    beforeEach(() => {
+      migaEngine = new Engine(GameMode.MIGA);
+      migaLane = {
+        x: 0,
+        y: 0,
+        width: 350,
+        height: 683,
+        gutterWidth: 20
+      };
+      // Create pins for all 4 rows to test row detection
+      migaPins = [
+        { id: 1, x: 175, y: 50, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 1
+        { id: 2, x: 130, y: 100, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 2
+        { id: 3, x: 220, y: 100, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 2
+        { id: 4, x: 85, y: 150, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 3
+        { id: 5, x: 175, y: 150, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 3
+        { id: 6, x: 265, y: 150, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 3
+        { id: 7, x: 40, y: 200, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 4
+        { id: 8, x: 130, y: 200, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 4
+        { id: 9, x: 220, y: 200, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false }, // row 4
+        { id: 10, x: 310, y: 200, r: 14.5, vx: 0, vy: 0, mass: 1, active: true, hit: false } // row 4
+      ];
+    });
+
+    describe('constructor', () => {
+      it('should initialize with MIGA mode deceleration', () => {
+        expect(migaEngine.deceleration).toBe(0.025);
+      });
+
+      it('should initialize rowDirection array', () => {
+        expect(migaEngine.rowDirection).toHaveLength(4);
+      });
+
+      it('should initialize all rows to RIGHT direction', () => {
+        // All rows should start with the same direction (RIGHT)
+        const firstDirection = migaEngine.rowDirection[0];
+        const allSame = migaEngine.rowDirection.every(dir => dir === firstDirection);
+        expect(allSame).toBe(true);
+      });
+    });
+
+    describe('getPinRow', () => {
+      it('should return 1 for pin in first row', () => {
+        expect(migaEngine.getPinRow(migaPins[0])).toBe(1);
+      });
+
+      it('should return 2 for pins in second row', () => {
+        expect(migaEngine.getPinRow(migaPins[1])).toBe(2);
+        expect(migaEngine.getPinRow(migaPins[2])).toBe(2);
+      });
+
+      it('should return 3 for pins in third row', () => {
+        expect(migaEngine.getPinRow(migaPins[3])).toBe(3);
+        expect(migaEngine.getPinRow(migaPins[4])).toBe(3);
+        expect(migaEngine.getPinRow(migaPins[5])).toBe(3);
+      });
+
+      it('should return 4 for pins in fourth row', () => {
+        expect(migaEngine.getPinRow(migaPins[6])).toBe(4);
+        expect(migaEngine.getPinRow(migaPins[7])).toBe(4);
+        expect(migaEngine.getPinRow(migaPins[8])).toBe(4);
+        expect(migaEngine.getPinRow(migaPins[9])).toBe(4);
+      });
+
+      it('should return -1 for invalid pin', () => {
+        const invalidPin = { id: 99 };
+        expect(migaEngine.getPinRow(invalidPin)).toBe(-1);
+      });
+    });
+
+    describe('migaMode', () => {
+      it('should not affect inactive pins', () => {
+        migaPins[0].active = false;
+        migaPins[0].vx = 0;
+        
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        expect(migaPins[0].vx).toBe(0);
+      });
+
+      it('should not affect hit pins', () => {
+        migaPins[0].hit = true;
+        migaPins[0].vx = 0;
+        
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        expect(migaPins[0].vx).toBe(0);
+      });
+
+      it('should set vx to 1.4 when direction is RIGHT', () => {
+        migaEngine.rowDirection[0] = migaEngine.rowDirection[0]; // Keep RIGHT
+        migaPins[0].vx = 0;
+        
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        expect(migaPins[0].vx).toBe(1.4);
+      });
+
+      it('should set vx to -1.4 when direction is LEFT', () => {
+        // Trigger a boundary hit to change direction to LEFT
+        const rightBoundary = migaLane.x + migaLane.width + migaLane.gutterWidth;
+        migaPins[0].x = rightBoundary - 10; // Near right boundary
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        // Now direction should be LEFT, test again
+        migaPins[0].x = 175; // Move back to center
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        expect(migaPins[0].vx).toBe(-1.4);
+      });
+
+      it('should change direction to LEFT when pin hits right boundary', () => {
+        const rightBoundary = migaLane.x + migaLane.width + migaLane.gutterWidth;
+        migaPins[0].x = rightBoundary - 10; // Within 10px of right boundary
+        
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        // Direction should now be LEFT
+        migaPins[0].x = 175; // Move back
+        migaEngine.migaMode(migaPins[0], migaLane);
+        expect(migaPins[0].vx).toBe(-1.4);
+      });
+
+      it('should change direction to RIGHT when pin hits left boundary', () => {
+        // First set to LEFT
+        migaPins[0].x = migaLane.x + migaLane.width + migaLane.gutterWidth - 10;
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        // Now hit left boundary
+        const leftBoundary = migaLane.x + migaLane.gutterWidth;
+        migaPins[0].x = leftBoundary + 10; // Within 10px of left boundary
+        
+        migaEngine.migaMode(migaPins[0], migaLane);
+        
+        // Direction should now be RIGHT
+        migaPins[0].x = 175; // Move back
+        migaEngine.migaMode(migaPins[0], migaLane);
+        expect(migaPins[0].vx).toBe(1.4);
+      });
+    });
+
+    describe('update with MIGA mode', () => {
+      it('should apply migaMode to active unhit pins', () => {
+        const ball = { x: 175, y: 600, r: 25, vx: 0, vy: 0, mass: 7.5, rolling: false };
+        migaPins[0].vx = 0;
+        migaPins[0].vy = 0;
+        
+        migaEngine.update(ball, migaPins, migaLane, 16.67);
+        
+        // Pin should have horizontal velocity from migaMode (1.4) but deceleration is applied after
+        // migaMode sets vx to 1.4, then deceleration (0.025) is applied, then rounded to 3 decimal places
+        // The value should be positive (moving right) and approximately 1.36-1.37 after deceleration and rounding
+        expect(migaPins[0].vx).toBeGreaterThan(1.3);
+        expect(migaPins[0].vx).toBeLessThan(1.4);
+        expect(migaPins[0].vx).toBeGreaterThan(0); // Moving right
+      });
+
+      it('should not apply migaMode to hit pins', () => {
+        const ball = { x: 175, y: 600, r: 25, vx: 0, vy: 0, mass: 7.5, rolling: false };
+        migaPins[0].hit = true;
+        migaPins[0].vx = 0;
+        
+        migaEngine.update(ball, migaPins, migaLane, 16.67);
+        
+        // Hit pins should not get migaMode velocity
+        expect(migaPins[0].vx).toBe(0);
+      });
+
+      it('should use higher deceleration in MIGA mode', () => {
+        const ball = { x: 175, y: 600, r: 25, vx: 0, vy: 0, mass: 7.5, rolling: false };
+        migaPins[0].vx = 10;
+        migaPins[0].vy = 10;
+        const initialVx = migaPins[0].vx;
+        
+        migaEngine.update(ball, migaPins, migaLane, 16.67);
+        
+        // MIGA mode has higher deceleration (0.025 vs 0.01)
+        // So velocity should decrease more
+        const normalEngine = new Engine(GameMode.NORMAL);
+        const normalPin = { id: 1, x: 175, y: 50, r: 14.5, vx: 10, vy: 10, mass: 1, active: true, hit: false };
+        normalEngine.update(ball, [normalPin], migaLane, 16.67);
+        
+        // MIGA pin should have lower velocity after deceleration
+        expect(Math.abs(migaPins[0].vx)).toBeLessThan(Math.abs(normalPin.vx));
+      });
     });
   });
 });

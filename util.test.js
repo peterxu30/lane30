@@ -113,5 +113,39 @@ describe('util', () => {
       expect(util.frameTenSecondRollIsSpare(frame)).toBe(false);
     });
   });
+
+  describe('laneLeftBoundary', () => {
+    it('should return lane.x + lane.gutterWidth', () => {
+      const lane = { x: 0, gutterWidth: 20 };
+      expect(util.laneLeftBoundary(lane)).toBe(20);
+    });
+
+    it('should handle non-zero lane.x', () => {
+      const lane = { x: 10, gutterWidth: 20 };
+      expect(util.laneLeftBoundary(lane)).toBe(30);
+    });
+
+    it('should handle different gutter widths', () => {
+      const lane = { x: 0, gutterWidth: 15 };
+      expect(util.laneLeftBoundary(lane)).toBe(15);
+    });
+  });
+
+  describe('laneRightBoundary', () => {
+    it('should return lane.x + lane.width + lane.gutterWidth', () => {
+      const lane = { x: 0, width: 350, gutterWidth: 20 };
+      expect(util.laneRightBoundary(lane)).toBe(370);
+    });
+
+    it('should handle non-zero lane.x', () => {
+      const lane = { x: 10, width: 350, gutterWidth: 20 };
+      expect(util.laneRightBoundary(lane)).toBe(380);
+    });
+
+    it('should handle different lane dimensions', () => {
+      const lane = { x: 0, width: 400, gutterWidth: 25 };
+      expect(util.laneRightBoundary(lane)).toBe(425);
+    });
+  });
 });
 

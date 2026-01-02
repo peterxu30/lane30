@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GameStates } from './game-states.js';
+import { GameStates, GameMode } from './game-states.js';
 
 describe('GameStates', () => {
   it('should export GameStates object', () => {
@@ -42,6 +42,38 @@ describe('GameStates', () => {
     expect(GameStates.FRAME_DONE.description).toBe('frame_done');
     expect(GameStates.OVER.description).toBe('over');
     // RESTART is marked as NOT USED in game-states.js
+  });
+});
+
+describe('GameMode', () => {
+  it('should export GameMode object', () => {
+    expect(GameMode).toBeDefined();
+    expect(typeof GameMode).toBe('object');
+  });
+
+  it('should have NORMAL and MIGA symbols', () => {
+    expect(GameMode.NORMAL).toBeDefined();
+    expect(GameMode.MIGA).toBeDefined();
+  });
+
+  it('should have symbols as values', () => {
+    expect(typeof GameMode.NORMAL).toBe('symbol');
+    expect(typeof GameMode.MIGA).toBe('symbol');
+  });
+
+  it('should have unique symbols', () => {
+    const modes = Object.values(GameMode);
+    const uniqueModes = new Set(modes);
+    expect(uniqueModes.size).toBe(modes.length);
+  });
+
+  it('should be frozen', () => {
+    expect(Object.isFrozen(GameMode)).toBe(true);
+  });
+
+  it('should have description property on symbols', () => {
+    expect(GameMode.NORMAL.description).toBe('normal');
+    expect(GameMode.MIGA.description).toBe('miga');
   });
 });
 

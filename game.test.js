@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { GameStates } from './game-states.js';
+import { GameStates, GameMode } from './game-states.js';
 import { RenderStates } from './render.js';
 
 // Setup DOM mocks before importing Game
@@ -86,7 +86,7 @@ describe('Game', () => {
       return null;
     });
     mockCanvas.getContext = vi.fn(() => mockCanvasContext);
-    game = new Game();
+    game = new Game(GameMode.NORMAL);
   });
 
   describe('constructor', () => {
@@ -118,6 +118,18 @@ describe('Game', () => {
     it('should initialize pins', () => {
       expect(game.pins).toBeDefined();
       expect(game.pins.length).toBeGreaterThan(0);
+    });
+
+    it('should initialize with correct gameMode', () => {
+      expect(game.gameMode).toBe(GameMode.NORMAL);
+    });
+
+    it('should pass gameMode to Engine', () => {
+      expect(game.engine.mode).toBe(GameMode.NORMAL);
+    });
+
+    it('should pass gameMode to Render', () => {
+      expect(game.render.gameMode).toBe(GameMode.NORMAL);
     });
   });
 
