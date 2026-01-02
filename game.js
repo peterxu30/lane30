@@ -1,4 +1,4 @@
-import { GameStates } from './game-states.js';
+import { GameStates, GameMode } from './game-states.js';
 import { Engine } from './engine.js';
 import { Render, RenderStates } from './render.js';
 import { Ticker } from './ticker.js';
@@ -40,9 +40,12 @@ class Game {
     this.scoreboard = document.getElementById('scoreboard');
     this.canvas = document.getElementById('lane');
 
+    // Game mode
+    this.gameMode = GameMode.MIGA;
+
     // Core components
-    this.engine = new Engine();
-    this.render = new Render(this.title, this.scoreboard, this.canvas);
+    this.engine = new Engine(this.gameMode);
+    this.render = new Render(this.gameMode, this.title, this.scoreboard, this.canvas);
     this.ticker = new Ticker(60); // responsible for maintaining a fixed refresh rate
 
     // Game objects
@@ -141,6 +144,10 @@ class Game {
 
   clearHitPins() {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
+  }
+
+  clearNotMovingHitPins() {
+    this.pins.forEach(p => { if (p.hit && p.vx === 0 && p.vy === 0) p.active = false; });
   }
 
   // handleRoll calculates points and advances the roll and frame. Returns a boolean for whether to reset pins or not.
@@ -416,6 +423,7 @@ class Game {
     function runHelper(timestamp) {
       self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.renderState);
+      self.clearNotMovingHitPins();
       self.handleGameState(false)
       window.requestAnimationFrame(runHelper); // recursive call
     }

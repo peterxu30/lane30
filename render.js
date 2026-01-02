@@ -1,3 +1,4 @@
+import { GameMode } from './game-states.js';
 import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 
@@ -43,6 +44,13 @@ const returnBallText = "Tap to return ball";
 const scoreboardStrike = 'X';
 const scoreboardSpare = '/';
 
+// Game Mode Miga Copy
+const gameOverTitleMiga = "TOUGH GAME";
+const gameOverSubtitleMiga = "Tap to cry again";
+const returnBallTextMiga = "Tap to suffer";
+const gameNotStartedTitleMiga = "Welcome to Hell Edition";
+const gameNotStartedSubtitleMiga = "Good luck";
+
 // Copy font sizes
 const gameNotStartedTitleFontSize = 21.7;
 const gameNotStartedSubtitleFontSize = 18;
@@ -60,7 +68,8 @@ const fontType = "Arial";
  * Game physics is handled independently of screen size for consistency.
  */
 export class Render {
-  constructor(title, scoreboard, canvas) {
+  constructor(gameMode, title, scoreboard, canvas) {
+    this.gameMode = gameMode;
     this.title = title;
     this.scoreboard = scoreboard;
     this.canvas = canvas;
@@ -379,6 +388,15 @@ export class Render {
   }
 
   writeGameNotStartedText() {
+    let gameNotStartedTitleCopy = gameNotStartedTitle;
+    let gameNotStartedSubtitleCopy = gameNotStartedSubtitle;
+    let returnBallTextCopy = returnBallText;
+    if (this.gameMode === GameMode.MIGA) {
+      gameNotStartedTitleCopy = gameNotStartedTitleMiga;
+      gameNotStartedSubtitleCopy = gameNotStartedSubtitleMiga;
+      returnBallTextCopy = returnBallTextMiga;
+    }
+
     this.ctx.textAlign = 'center';
 
     const adjustedTitleFontSize = gameNotStartedTitleFontSize * this.renderScale;
@@ -387,20 +405,27 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(gameNotStartedTitle, textX, textY); 
+    this.ctx.fillText(gameNotStartedTitleCopy, textX, textY); 
 
     const textMetrics = this.ctx.measureText(gameNotStartedSubtitle);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight * 1.7;
-    this.ctx.fillText(gameNotStartedSubtitle, textX, subtextY); 
+    this.ctx.fillText(gameNotStartedSubtitleCopy, textX, subtextY); 
 
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtext2Y = textY + textHeight * 3.4;
-    this.ctx.fillText(returnBallText, textX, subtext2Y); 
+    this.ctx.fillText(returnBallTextCopy, textX, subtext2Y); 
   }
 
   writeGameOverText() {
+    let gameOverTitleCopy = gameOverTitle;
+    let gameOverSubtitleCopy = gameOverSubtitle;
+    if (this.gameMode === GameMode.MIGA) {
+      gameOverTitleCopy = gameOverTitleMiga;
+      gameOverSubtitleCopy = gameOverSubtitleMiga;
+    }
+
     this.ctx.textAlign = 'center';
 
     const adjustedTitleFontSize = gameOverTitleFontSize * this.renderScale;
@@ -409,16 +434,21 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;    
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(gameOverTitle, textX, textY); 
+
+    this.ctx.fillText(gameOverTitleCopy, textX, textY); 
 
     const textMetrics = this.ctx.measureText(gameOverSubtitle);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight;
-    this.ctx.fillText(gameOverSubtitle, textX, subtextY); 
+    this.ctx.fillText(gameOverSubtitleCopy, textX, subtextY); 
   }
 
   writeBallReturnText() {
+    let returnBallTextCopy = returnBallText;
+    if (this.gameMode === GameMode.MIGA) {
+      returnBallTextCopy = returnBallTextMiga;
+    }
     this.ctx.textAlign = 'center';
 
     const adjustedSubtitleFontSize = ballReturnSubtitleFontSize * this.renderScale;
@@ -426,7 +456,7 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(returnBallText, textX, textY); 
+    this.ctx.fillText(returnBallTextCopy, textX, textY); 
   }
 
   writeTextForGameState(renderState) {
