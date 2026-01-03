@@ -46,15 +46,18 @@ export class Engine {
       }
     }
 
+    // Miga mode special pin movement
+    // TODO(peter.xu) refactor this to run a generic engineModule.
+    // The normal variant is a noop and the miga variant does migaMode.
+    if (this.mode === GameMode.MIGA) {
+      this.migaMode(pins, lane);
+    }
+    
     // Move pins
     pins.forEach(p => {
       if (!p.active) return;
       p.x += p.vx * tickModifierRatio;
       p.y += p.vy * tickModifierRatio;
-
-      if (this.mode === GameMode.MIGA) {
-        this.migaMode(p, lane);
-      }
 
       /*
       * 1. If pin is active and unhit, get all active and unhit pins with the same Y value and store them in a map
@@ -147,8 +150,35 @@ export class Engine {
       }
     }
   }
+
+  migaMode(pins, lane) {
+    this.determineMigaModeMovementChange(pins, lane);
+
+    pins.forEach(p => {
+      this.setMigaModePinMovement(p, lane);
+    });
+  }
+
+  determineMigaModeMovementChange(pins, lane) {
+    pins.forEach(pin => {
+      if (!pin.active || pin.hit) {
+        return;
+      }
+
+      let pinRow = this.getPinRow(pin);
+      if (pinRow === -1) {
+        console.log("invalid pin", pin);
+      }
+
+      if (pin.x + pin.r > util.laneRightBoundary(lane) - 10) {
+        this.rowDirection[pinRow-1] = Direction.LEFT;
+      } else if (pin.x - pin.r < util.laneLeftBoundary(lane) + 10) {
+        this.rowDirection[pinRow-1] = Direction.RIGHT;
+      }
+    });
+  }
   
-  migaMode(pin, lane) {
+  setMigaModePinMovement(pin) {
     if (!pin.active || pin.hit) {
       return;
     }
@@ -158,13 +188,7 @@ export class Engine {
       console.log("invalid pin", pin);
     }
 
-    if (pin.x + pin.r > util.laneRightBoundary(lane) - 10) {
-      this.rowDirection[pinRow-1] = Direction.LEFT;
-    } else if (pin.x - pin.r < util.laneLeftBoundary(lane) + 10) {
-      this.rowDirection[pinRow-1] = Direction.RIGHT;
-    }
-
-    if (this.rowDirection[pinRow-1] == Direction.LEFT) {
+    if (this.rowDirection[pinRow-1] === Direction.LEFT) {
       pin.vx = -1.4;
     } else if (this.rowDirection[pinRow-1] === Direction.RIGHT) {
       pin.vx = 1.4;
@@ -182,7 +206,7 @@ export class Engine {
         return;
     }
   }
-  
+
   resetMigaMode() {
     this.rowDirection.fill(Direction.RIGHT);
   }
