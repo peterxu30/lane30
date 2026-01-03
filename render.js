@@ -362,7 +362,10 @@ export class Render {
     this.canvas.addEventListener('pointerup',
       (pointer) => {
         if (this.activePointerManager.isActivePointer(pointer)) {
-          callback();
+          const rect = this.canvas.getBoundingClientRect();
+          const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+          const pointerY = (pointer.pageY - rect.top) / this.renderScale;
+          callback(pointerX, pointerY);
           this.activePointerManager.clearActivePointer();
         }
       },

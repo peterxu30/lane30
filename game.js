@@ -34,14 +34,14 @@ const pinBaseYBuffer = 20; // distance from top of lane to first row of pins
  * Game physics is handled independently of screen size for consistency.
  */
 class Game {
-  constructor(gameMode) {
+  constructor() {
     // HTML Components
     this.title = document.getElementById('title');
     this.scoreboard = document.getElementById('scoreboard');
     this.canvas = document.getElementById('lane');
 
     // Game mode
-    this.gameMode = gameMode;
+    this.gameMode = GameMode.NORMAL;
 
     // Core components
     this.engine = new Engine(this.gameMode);
@@ -139,7 +139,6 @@ class Game {
     this.frames = this.buildFrames();
     this.currentFrame = 0;
     this.rollInFrame = 0;
-    this.gameState = GameStates.RUNNING;
     this.engine.reset();
   }
 
@@ -284,9 +283,29 @@ class Game {
     this.render.setupPointerCancelListener();
   }
 
+  shouldActivateMigaMode(pointerX, pointerY) {
+    let rightThirdLaneX = (this.lane.x + this.lane.width + 2*this.lane.gutterWidth) * 2 / 3;
+    let topThirdLaneY = (this.lane.y + this.lane.height) / 3;
+    let pointerIsInTopRightCorner = pointerX > rightThirdLaneX && pointerY < topThirdLaneY;
+    return this.gameMode === GameMode.NORMAL && pointerIsInTopRightCorner;
+  }
+
+  activateMigaMode() {
+    console.log("MIGA MODE ACTIVATED");
+    this.gameMode = GameMode.MIGA;
+    this.gameState = GameStates.INITIALIZED;
+    // TODO(peter.xu) Should add a new method to update the gameMode of the Engine and Render instead of recreating.
+    this.engine = new Engine(this.gameMode);
+    this.render = new Render(this.gameMode, this.title, this.scoreboard, this.canvas);
+    this.resetGame();
+  }
+
   pointerDownCallback(pointerX, pointerY) {
     switch (this.gameState) {
       case GameStates.INITIALIZED:
+        if (this.shouldActivateMigaMode(pointerX, pointerY)) {
+          this.activateMigaMode();
+        }
       case GameStates.NOT_RUNNING:
         const x = Math.abs(pointerX - this.ball.x);
         const y = Math.abs(pointerY - this.ball.y);
@@ -307,7 +326,8 @@ class Game {
     this.ball.x = Math.max(minX, Math.min(maxX, pointerX));
   }
 
-  pointerEndCallback() {
+  pointerEndCallback(pointerX, pointerY) {
+    console.log(pointerX, pointerY);
     this.handleGameState(true);
   }
 

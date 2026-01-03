@@ -2,6 +2,6 @@ import { Game } from './game.js';
 import { GameMode } from './game-states.js';
 
 (() => {
-  const game = new Game(GameMode.MIGA);
+  const game = new Game();
   game.run();
 })();
