@@ -140,6 +140,7 @@ class Game {
     this.currentFrame = 0;
     this.rollInFrame = 0;
     this.gameState = GameStates.RUNNING;
+    this.engine.reset();
   }
 
   clearHitPins() {

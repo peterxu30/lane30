@@ -174,4 +174,16 @@ export class Engine {
       pin.active = false;
     }
   }
+
+  reset() {
+    switch (this.gameMode) {
+      case GameMode.MIGA:
+        this.resetMigaMode();
+        return;
+    }
+  }
+  
+  resetMigaMode() {
+    this.rowDirection.fill(Direction.RIGHT);
+  }
 }
