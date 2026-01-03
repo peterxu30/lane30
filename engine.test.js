@@ -344,7 +344,7 @@ describe('Engine', () => {
         migaPins[0].active = false;
         migaPins[0].vx = 0;
         
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
         expect(migaPins[0].vx).toBe(0);
       });
@@ -353,7 +353,7 @@ describe('Engine', () => {
         migaPins[0].hit = true;
         migaPins[0].vx = 0;
         
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
         expect(migaPins[0].vx).toBe(0);
       });
@@ -362,7 +362,7 @@ describe('Engine', () => {
         migaEngine.rowDirection[0] = migaEngine.rowDirection[0]; // Keep RIGHT
         migaPins[0].vx = 0;
         
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
         expect(migaPins[0].vx).toBe(1.4);
       });
@@ -371,11 +371,11 @@ describe('Engine', () => {
         // Trigger a boundary hit to change direction to LEFT
         const rightBoundary = migaLane.x + migaLane.width + migaLane.gutterWidth;
         migaPins[0].x = rightBoundary - 10; // Near right boundary
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
         // Now direction should be LEFT, test again
         migaPins[0].x = 175; // Move back to center
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
         expect(migaPins[0].vx).toBe(-1.4);
       });
@@ -384,28 +384,26 @@ describe('Engine', () => {
         const rightBoundary = migaLane.x + migaLane.width + migaLane.gutterWidth;
         migaPins[0].x = rightBoundary - 10; // Within 10px of right boundary
         
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
-        // Direction should now be LEFT
-        migaPins[0].x = 175; // Move back
-        migaEngine.migaMode(migaPins[0], migaLane);
+        // Direction should now be LEFT, verify by checking vx
         expect(migaPins[0].vx).toBe(-1.4);
       });
 
       it('should change direction to RIGHT when pin hits left boundary', () => {
-        // First set to LEFT
-        migaPins[0].x = migaLane.x + migaLane.width + migaLane.gutterWidth - 10;
-        migaEngine.migaMode(migaPins[0], migaLane);
+        // First set direction to LEFT by hitting right boundary
+        const rightBoundary = migaLane.x + migaLane.width + migaLane.gutterWidth;
+        migaPins[0].x = rightBoundary - 10;
+        migaEngine.migaMode(migaPins, migaLane);
+        expect(migaPins[0].vx).toBe(-1.4); // Verify it's LEFT
         
-        // Now hit left boundary
+        // Now hit left boundary to change back to RIGHT
         const leftBoundary = migaLane.x + migaLane.gutterWidth;
         migaPins[0].x = leftBoundary + 10; // Within 10px of left boundary
         
-        migaEngine.migaMode(migaPins[0], migaLane);
+        migaEngine.migaMode(migaPins, migaLane);
         
         // Direction should now be RIGHT
-        migaPins[0].x = 175; // Move back
-        migaEngine.migaMode(migaPins[0], migaLane);
         expect(migaPins[0].vx).toBe(1.4);
       });
     });
