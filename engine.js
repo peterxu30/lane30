@@ -17,6 +17,10 @@ const Direction = Object.freeze({
 export class Engine {
 
   constructor(gameMode) {
+    this.setGameMode(gameMode);
+  }
+
+  setGameMode(gameMode) {
     this.mode = gameMode;
     this.deceleration = this.mode === GameMode.MIGA ? 0.025 : 0.01;
 

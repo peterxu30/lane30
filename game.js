@@ -283,28 +283,34 @@ class Game {
     this.render.setupPointerCancelListener();
   }
 
-  shouldActivateMigaMode(pointerX, pointerY) {
+  shouldSwitchGameMode(pointerX, pointerY) {
     let rightThirdLaneX = (this.lane.x + this.lane.width + 2*this.lane.gutterWidth) * 2 / 3;
     let topThirdLaneY = (this.lane.y + this.lane.height) / 3;
     let pointerIsInTopRightCorner = pointerX > rightThirdLaneX && pointerY < topThirdLaneY;
-    return this.gameMode === GameMode.NORMAL && pointerIsInTopRightCorner;
+    return pointerIsInTopRightCorner;
   }
 
-  activateMigaMode() {
-    console.log("MIGA MODE ACTIVATED");
-    this.gameMode = GameMode.MIGA;
+  activateGameMode(gameMode) {
+    this.gameMode = gameMode;
     this.gameState = GameStates.INITIALIZED;
-    // TODO(peter.xu) Should add a new method to update the gameMode of the Engine and Render instead of recreating.
-    this.engine = new Engine(this.gameMode);
-    this.render = new Render(this.gameMode, this.title, this.scoreboard, this.canvas);
+    this.engine.setGameMode(this.gameMode);
+    this.render.setGameMode(this.gameMode);
     this.resetGame();
+  }
+
+  switchGameMode() {
+    if (this.gameMode === GameMode.NORMAL) {
+      this.activateGameMode(GameMode.MIGA);
+    } else {
+      this.activateGameMode(GameMode.NORMAL);
+    }
   }
 
   pointerDownCallback(pointerX, pointerY) {
     switch (this.gameState) {
       case GameStates.INITIALIZED:
-        if (this.shouldActivateMigaMode(pointerX, pointerY)) {
-          this.activateMigaMode();
+        if (this.shouldSwitchGameMode(pointerX, pointerY)) {
+          this.switchGameMode();
         }
       case GameStates.NOT_RUNNING:
         const x = Math.abs(pointerX - this.ball.x);

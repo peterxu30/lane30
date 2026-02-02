@@ -36,20 +36,26 @@ const pinStrokeColor = 'red';
 const pinStrokeWidth = 3;
 
 // Copy
-const gameOverTitle = "NICE GAME";
-const gameOverSubtitle = "Tap to start new game";
-const gameNotStartedTitle = "PKING 30th Anniversary Edition";
-const gameNotStartedSubtitle = "Drag ball left and right to aim";
-const returnBallText = "Tap to return ball";
 const scoreboardStrike = 'X';
 const scoreboardSpare = '/';
 
-// Game Mode Miga Copy
-const gameOverTitleMiga = "TOUGH GAME";
-const gameOverSubtitleMiga = "Tap to cry again";
-const returnBallTextMiga = "Tap to suffer";
-const gameNotStartedTitleMiga = "Welcome to Hell Edition";
-const gameNotStartedSubtitleMiga = "Good luck";
+// Copy for Game Mode
+const gameModeCopyMap = {
+  [GameMode.NORMAL]: {
+    gameOverTitle: "NICE GAME",
+    gameOverSubtitle: "Tap to start new game",
+    gameNotStartedTitle: "PKING 30th Anniversary Edition",
+    gameNotStartedSubtitle: "Drag ball left and right to aim",
+    returnBallText: "Tap to return ball",
+  },
+  [GameMode.MIGA]: {
+    gameOverTitle: "TOUGH GAME",
+    gameOverSubtitle: "Tap to cry again",
+    returnBallText: "Tap to suffer",
+    gameNotStartedTitle: "Welcome to Hell Edition",
+    gameNotStartedSubtitle: "Good luck",
+  },
+}
 
 // Copy font sizes
 const gameNotStartedTitleFontSize = 21.7;
@@ -78,6 +84,10 @@ export class Render {
     
     // touch drag
     this.activePointerManager = new ActivePointerManager();
+  }
+
+  setGameMode(gameMode) {
+    this.gameMode = gameMode;
   }
 
   getTopMargin(element) {
@@ -391,14 +401,10 @@ export class Render {
   }
 
   writeGameNotStartedText() {
-    let gameNotStartedTitleCopy = gameNotStartedTitle;
-    let gameNotStartedSubtitleCopy = gameNotStartedSubtitle;
-    let returnBallTextCopy = returnBallText;
-    if (this.gameMode === GameMode.MIGA) {
-      gameNotStartedTitleCopy = gameNotStartedTitleMiga;
-      gameNotStartedSubtitleCopy = gameNotStartedSubtitleMiga;
-      returnBallTextCopy = returnBallTextMiga;
-    }
+    const gameModeCopy = gameModeCopyMap[this.gameMode];
+    let gameNotStartedTitleCopy = gameModeCopy.gameNotStartedTitle;
+    let gameNotStartedSubtitleCopy = gameModeCopy.gameNotStartedSubtitle;
+    let returnBallTextCopy = gameModeCopy.returnBallText;
 
     this.ctx.textAlign = 'center';
 
@@ -410,7 +416,7 @@ export class Render {
     const textY = this.#getCanvasHeight() / 2.5;
     this.ctx.fillText(gameNotStartedTitleCopy, textX, textY); 
 
-    const textMetrics = this.ctx.measureText(gameNotStartedSubtitle);
+    const textMetrics = this.ctx.measureText(gameNotStartedSubtitleCopy);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight * 1.7;
@@ -422,12 +428,9 @@ export class Render {
   }
 
   writeGameOverText() {
-    let gameOverTitleCopy = gameOverTitle;
-    let gameOverSubtitleCopy = gameOverSubtitle;
-    if (this.gameMode === GameMode.MIGA) {
-      gameOverTitleCopy = gameOverTitleMiga;
-      gameOverSubtitleCopy = gameOverSubtitleMiga;
-    }
+    const gameModeCopy = gameModeCopyMap[this.gameMode];
+    let gameOverTitleCopy = gameModeCopy.gameOverTitle;
+    let gameOverSubtitleCopy = gameModeCopy.gameOverSubtitle;
 
     this.ctx.textAlign = 'center';
 
@@ -440,7 +443,7 @@ export class Render {
 
     this.ctx.fillText(gameOverTitleCopy, textX, textY); 
 
-    const textMetrics = this.ctx.measureText(gameOverSubtitle);
+    const textMetrics = this.ctx.measureText(gameOverSubtitleCopy);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight;
@@ -448,10 +451,8 @@ export class Render {
   }
 
   writeBallReturnText() {
-    let returnBallTextCopy = returnBallText;
-    if (this.gameMode === GameMode.MIGA) {
-      returnBallTextCopy = returnBallTextMiga;
-    }
+    const gameModeCopy = gameModeCopyMap[this.gameMode];
+    let returnBallTextCopy = gameModeCopy.returnBallText;
     this.ctx.textAlign = 'center';
 
     const adjustedSubtitleFontSize = ballReturnSubtitleFontSize * this.renderScale;
