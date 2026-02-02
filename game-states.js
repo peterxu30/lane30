@@ -27,3 +27,9 @@ export const GameStates = Object.freeze({
   FRAME_DONE: Symbol("frame_done"), // ball of screen, pins finished moving
   OVER:  Symbol("over"), // game is over, ten frames have been bowled 
 });
+
+
+export const GameMode = Object.freeze({
+  NORMAL: Symbol("normal"),
+  MIGA: Symbol("miga"),
+});

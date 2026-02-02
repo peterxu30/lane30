@@ -1,3 +1,4 @@
+import { GameMode } from './game-states.js';
 import { ActivePointerManager } from './active-pointer-manager.js';
 import * as util from './util.js';
 
@@ -35,13 +36,26 @@ const pinStrokeColor = 'red';
 const pinStrokeWidth = 3;
 
 // Copy
-const gameOverTitle = "NICE GAME";
-const gameOverSubtitle = "Tap to start new game";
-const gameNotStartedTitle = "PKING 30th Anniversary Edition";
-const gameNotStartedSubtitle = "Drag ball left and right to aim";
-const returnBallText = "Tap to return ball";
 const scoreboardStrike = 'X';
 const scoreboardSpare = '/';
+
+// Copy for Game Mode
+const gameModeCopyMap = {
+  [GameMode.NORMAL]: {
+    gameOverTitle: "NICE GAME",
+    gameOverSubtitle: "Tap to start new game",
+    gameNotStartedTitle: "PKING 30th Anniversary Edition",
+    gameNotStartedSubtitle: "Drag ball left and right to aim",
+    returnBallText: "Tap to return ball",
+  },
+  [GameMode.MIGA]: {
+    gameOverTitle: "TOUGH GAME",
+    gameOverSubtitle: "Tap to cry again",
+    returnBallText: "Tap to suffer",
+    gameNotStartedTitle: "Welcome to Hell Edition",
+    gameNotStartedSubtitle: "Good luck",
+  },
+}
 
 // Copy font sizes
 const gameNotStartedTitleFontSize = 21.7;
@@ -60,7 +74,8 @@ const fontType = "Arial";
  * Game physics is handled independently of screen size for consistency.
  */
 export class Render {
-  constructor(title, scoreboard, canvas) {
+  constructor(gameMode, title, scoreboard, canvas) {
+    this.gameMode = gameMode;
     this.title = title;
     this.scoreboard = scoreboard;
     this.canvas = canvas;
@@ -69,6 +84,10 @@ export class Render {
     
     // touch drag
     this.activePointerManager = new ActivePointerManager();
+  }
+
+  setGameMode(gameMode) {
+    this.gameMode = gameMode;
   }
 
   getTopMargin(element) {
@@ -353,7 +372,10 @@ export class Render {
     this.canvas.addEventListener('pointerup',
       (pointer) => {
         if (this.activePointerManager.isActivePointer(pointer)) {
-          callback();
+          const rect = this.canvas.getBoundingClientRect();
+          const pointerX = (pointer.pageX - rect.left) / this.renderScale;
+          const pointerY = (pointer.pageY - rect.top) / this.renderScale;
+          callback(pointerX, pointerY);
           this.activePointerManager.clearActivePointer();
         }
       },
@@ -379,6 +401,11 @@ export class Render {
   }
 
   writeGameNotStartedText() {
+    const gameModeCopy = gameModeCopyMap[this.gameMode];
+    let gameNotStartedTitleCopy = gameModeCopy.gameNotStartedTitle;
+    let gameNotStartedSubtitleCopy = gameModeCopy.gameNotStartedSubtitle;
+    let returnBallTextCopy = gameModeCopy.returnBallText;
+
     this.ctx.textAlign = 'center';
 
     const adjustedTitleFontSize = gameNotStartedTitleFontSize * this.renderScale;
@@ -387,20 +414,24 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(gameNotStartedTitle, textX, textY); 
+    this.ctx.fillText(gameNotStartedTitleCopy, textX, textY); 
 
-    const textMetrics = this.ctx.measureText(gameNotStartedSubtitle);
+    const textMetrics = this.ctx.measureText(gameNotStartedSubtitleCopy);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight * 1.7;
-    this.ctx.fillText(gameNotStartedSubtitle, textX, subtextY); 
+    this.ctx.fillText(gameNotStartedSubtitleCopy, textX, subtextY); 
 
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtext2Y = textY + textHeight * 3.4;
-    this.ctx.fillText(returnBallText, textX, subtext2Y); 
+    this.ctx.fillText(returnBallTextCopy, textX, subtext2Y); 
   }
 
   writeGameOverText() {
+    const gameModeCopy = gameModeCopyMap[this.gameMode];
+    let gameOverTitleCopy = gameModeCopy.gameOverTitle;
+    let gameOverSubtitleCopy = gameModeCopy.gameOverSubtitle;
+
     this.ctx.textAlign = 'center';
 
     const adjustedTitleFontSize = gameOverTitleFontSize * this.renderScale;
@@ -409,16 +440,19 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;    
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(gameOverTitle, textX, textY); 
 
-    const textMetrics = this.ctx.measureText(gameOverSubtitle);
+    this.ctx.fillText(gameOverTitleCopy, textX, textY); 
+
+    const textMetrics = this.ctx.measureText(gameOverSubtitleCopy);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight;
-    this.ctx.fillText(gameOverSubtitle, textX, subtextY); 
+    this.ctx.fillText(gameOverSubtitleCopy, textX, subtextY); 
   }
 
   writeBallReturnText() {
+    const gameModeCopy = gameModeCopyMap[this.gameMode];
+    let returnBallTextCopy = gameModeCopy.returnBallText;
     this.ctx.textAlign = 'center';
 
     const adjustedSubtitleFontSize = ballReturnSubtitleFontSize * this.renderScale;
@@ -426,7 +460,7 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(returnBallText, textX, textY); 
+    this.ctx.fillText(returnBallTextCopy, textX, textY); 
   }
 
   writeTextForGameState(renderState) {

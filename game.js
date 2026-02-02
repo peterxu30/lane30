@@ -1,4 +1,4 @@
-import { GameStates } from './game-states.js';
+import { GameStates, GameMode } from './game-states.js';
 import { Engine } from './engine.js';
 import { Render, RenderStates } from './render.js';
 import { Ticker } from './ticker.js';
@@ -40,9 +40,12 @@ class Game {
     this.scoreboard = document.getElementById('scoreboard');
     this.canvas = document.getElementById('lane');
 
+    // Game mode
+    this.gameMode = GameMode.NORMAL;
+
     // Core components
-    this.engine = new Engine();
-    this.render = new Render(this.title, this.scoreboard, this.canvas);
+    this.engine = new Engine(this.gameMode);
+    this.render = new Render(this.gameMode, this.title, this.scoreboard, this.canvas);
     this.ticker = new Ticker(60); // responsible for maintaining a fixed refresh rate
 
     // Game objects
@@ -136,11 +139,15 @@ class Game {
     this.frames = this.buildFrames();
     this.currentFrame = 0;
     this.rollInFrame = 0;
-    this.gameState = GameStates.RUNNING;
+    this.engine.reset();
   }
 
   clearHitPins() {
     this.pins.forEach(p => { if (p.hit) p.active = false; });
+  }
+
+  clearNotMovingHitPins() {
+    this.pins.forEach(p => { if (p.hit && p.vx === 0 && p.vy === 0) p.active = false; });
   }
 
   // handleRoll calculates points and advances the roll and frame. Returns a boolean for whether to reset pins or not.
@@ -276,9 +283,35 @@ class Game {
     this.render.setupPointerCancelListener();
   }
 
+  shouldSwitchGameMode(pointerX, pointerY) {
+    let rightThirdLaneX = (this.lane.x + this.lane.width + 2*this.lane.gutterWidth) * 2 / 3;
+    let topThirdLaneY = (this.lane.y + this.lane.height) / 3;
+    let pointerIsInTopRightCorner = pointerX > rightThirdLaneX && pointerY < topThirdLaneY;
+    return pointerIsInTopRightCorner;
+  }
+
+  activateGameMode(gameMode) {
+    this.gameMode = gameMode;
+    this.gameState = GameStates.INITIALIZED;
+    this.engine.setGameMode(this.gameMode);
+    this.render.setGameMode(this.gameMode);
+    this.resetGame();
+  }
+
+  switchGameMode() {
+    if (this.gameMode === GameMode.NORMAL) {
+      this.activateGameMode(GameMode.MIGA);
+    } else {
+      this.activateGameMode(GameMode.NORMAL);
+    }
+  }
+
   pointerDownCallback(pointerX, pointerY) {
     switch (this.gameState) {
       case GameStates.INITIALIZED:
+        if (this.shouldSwitchGameMode(pointerX, pointerY)) {
+          this.switchGameMode();
+        }
       case GameStates.NOT_RUNNING:
         const x = Math.abs(pointerX - this.ball.x);
         const y = Math.abs(pointerY - this.ball.y);
@@ -299,7 +332,8 @@ class Game {
     this.ball.x = Math.max(minX, Math.min(maxX, pointerX));
   }
 
-  pointerEndCallback() {
+  pointerEndCallback(pointerX, pointerY) {
+    console.log(pointerX, pointerY);
     this.handleGameState(true);
   }
 
@@ -416,6 +450,7 @@ class Game {
     function runHelper(timestamp) {
       self.engine.update(self.ball, self.pins, self.lane, self.ticker.tickInterval(timestamp));
       self.render.draw(self.ball, self.pins, self.lane, self.frames, self.renderState);
+      self.clearNotMovingHitPins();
       self.handleGameState(false)
       window.requestAnimationFrame(runHelper); // recursive call
     }
