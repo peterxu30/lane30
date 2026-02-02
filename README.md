@@ -5,6 +5,8 @@ This is a simple bowling game built to commemorate my 30th birthday. ~~Don't tel
 
 Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 
+Play it at [https://peterxu30.github.io/lane30](https://peterxu30.github.io/lane30)
+
 # Features
 - Simple collision physics: Ball hits one way, pins go the other. Pins naturally decelerate.
 - Accurate scoring table: Correct bowling scoring including special frame 10 logic.
