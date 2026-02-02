@@ -1,7 +1,7 @@
 # lane30
 
 # About
-This is a simple bowling game built to commemorate my 30th birthday. Don't tell anyone yet because it's still a secret.
+This is a simple bowling game built to commemorate my 30th birthday. ~~Don't tell anyone yet because it's still a secret.~~ It was a great success.
 
 Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 
