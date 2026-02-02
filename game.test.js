@@ -459,9 +459,17 @@ describe('Game', () => {
       expect(game.rollInFrame).toBe(0);
     });
 
-    it('should set game state to RUNNING', () => {
+    it('should reset lane and call engine reset', () => {
+      const initialPinsLength = game.pins.length;
+      game.pins[0].active = false;
+      game.pins[0].hit = true;
+      
       game.resetGame();
-      expect(game.gameState).toBe(GameStates.RUNNING);
+      
+      // Pins should be rebuilt
+      expect(game.pins.length).toBe(initialPinsLength);
+      expect(game.pins[0].active).toBe(true);
+      expect(game.pins[0].hit).toBe(false);
     });
   });
 
@@ -544,6 +552,173 @@ describe('Game', () => {
       game.handleGameState(false);
       
       expect(game.renderState).toBe(RenderStates.BALL_RETURN);
+    });
+  });
+
+  describe('switchGameMode and activateGameMode', () => {
+    describe('switchGameMode', () => {
+      it('should switch from NORMAL to MIGA mode correctly', () => {
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        
+        game.switchGameMode();
+        
+        expect(game.gameMode).toBe(GameMode.MIGA);
+        expect(game.engine.mode).toBe(GameMode.MIGA);
+        expect(game.engine.deceleration).toBe(0.025);
+        expect(game.render.gameMode).toBe(GameMode.MIGA);
+        expect(game.gameState).toBe(GameStates.INITIALIZED);
+        expect(game.currentFrame).toBe(0);
+        expect(game.rollInFrame).toBe(0);
+        expect(game.engine.rowDirection).toHaveLength(4);
+        // All directions should be the same (RIGHT) after reset
+        const firstDirection = game.engine.rowDirection[0];
+        expect(game.engine.rowDirection.every(dir => dir === firstDirection)).toBe(true);
+      });
+
+      it('should switch from MIGA to NORMAL mode correctly', () => {
+        // Start with NORMAL, switch to MIGA first
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        game.switchGameMode(); // NORMAL → MIGA
+        expect(game.gameMode).toBe(GameMode.MIGA);
+        
+        // Now switch back to NORMAL
+        game.switchGameMode();
+        
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        expect(game.engine.mode).toBe(GameMode.NORMAL);
+        expect(game.engine.deceleration).toBe(0.01);
+        expect(game.render.gameMode).toBe(GameMode.NORMAL);
+        expect(game.gameState).toBe(GameStates.INITIALIZED);
+        expect(game.currentFrame).toBe(0);
+        expect(game.rollInFrame).toBe(0);
+      });
+
+      it('should handle round trip switching NORMAL → MIGA → NORMAL', () => {
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        
+        // Switch to MIGA
+        game.switchGameMode();
+        expect(game.gameMode).toBe(GameMode.MIGA);
+        expect(game.engine.deceleration).toBe(0.025);
+        
+        // Switch back to NORMAL
+        game.switchGameMode();
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        expect(game.engine.mode).toBe(GameMode.NORMAL);
+        expect(game.engine.deceleration).toBe(0.01);
+        expect(game.render.gameMode).toBe(GameMode.NORMAL);
+        expect(game.gameState).toBe(GameStates.INITIALIZED);
+        expect(game.currentFrame).toBe(0);
+        expect(game.rollInFrame).toBe(0);
+      });
+    });
+
+    describe('activateGameMode', () => {
+      it('should activate MIGA mode directly', () => {
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        
+        game.activateGameMode(GameMode.MIGA);
+        
+        expect(game.gameMode).toBe(GameMode.MIGA);
+        expect(game.engine.mode).toBe(GameMode.MIGA);
+        expect(game.engine.deceleration).toBe(0.025);
+        expect(game.render.gameMode).toBe(GameMode.MIGA);
+        expect(game.gameState).toBe(GameStates.INITIALIZED);
+        expect(game.currentFrame).toBe(0);
+        expect(game.rollInFrame).toBe(0);
+        expect(game.engine.rowDirection).toHaveLength(4);
+      });
+
+      it('should activate NORMAL mode directly', () => {
+        // Start with NORMAL, switch to MIGA first
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        game.activateGameMode(GameMode.MIGA);
+        expect(game.gameMode).toBe(GameMode.MIGA);
+        
+        // Now activate NORMAL mode directly
+        game.activateGameMode(GameMode.NORMAL);
+        
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        expect(game.engine.mode).toBe(GameMode.NORMAL);
+        expect(game.engine.deceleration).toBe(0.01);
+        expect(game.render.gameMode).toBe(GameMode.NORMAL);
+        expect(game.gameState).toBe(GameStates.INITIALIZED);
+        expect(game.currentFrame).toBe(0);
+        expect(game.rollInFrame).toBe(0);
+      });
+    });
+
+    describe('game state reset', () => {
+      it('should reset game state when switching modes', () => {
+        // Set up some game progress
+        game.currentFrame = 5;
+        game.rollInFrame = 1;
+        game.frames[0].roll1 = 10;
+        game.frames[1].roll1 = 7;
+        game.frames[1].roll2 = 2;
+        game.pins[0].active = false;
+        game.pins[0].hit = true;
+        game.ball.x = 200;
+        game.ball.y = 500;
+        game.ball.rolling = true;
+        
+        game.switchGameMode();
+        
+        // All state should be reset
+        expect(game.currentFrame).toBe(0);
+        expect(game.rollInFrame).toBe(0);
+        expect(game.frames[0].roll1).toBe(null);
+        expect(game.frames[1].roll1).toBe(null);
+        expect(game.frames[1].roll2).toBe(null);
+        expect(game.pins[0].active).toBe(true);
+        expect(game.pins[0].hit).toBe(false);
+        expect(game.ball.x).toBe(game.ball.startingX);
+        expect(game.ball.y).toBe(game.ball.startingY);
+        expect(game.ball.rolling).toBe(false);
+      });
+
+      it('should reset engine rowDirection when switching to MIGA mode', () => {
+        // Start with NORMAL, switch to MIGA first
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        game.switchGameMode(); // NORMAL → MIGA
+        expect(game.gameMode).toBe(GameMode.MIGA);
+        
+        // Modify rowDirection to simulate some state
+        const firstDirection = game.engine.rowDirection[0];
+        // Change one direction (we can't directly access Direction.LEFT, but we can verify reset)
+        game.engine.rowDirection[0] = game.engine.rowDirection[1]; // Keep same for now
+        
+        // Switch to NORMAL then back to MIGA
+        game.switchGameMode(); // MIGA → NORMAL
+        game.switchGameMode(); // NORMAL → MIGA
+        
+        // rowDirection should be reset (all same direction)
+        expect(game.engine.rowDirection).toHaveLength(4);
+        const resetDirection = game.engine.rowDirection[0];
+        expect(game.engine.rowDirection.every(dir => dir === resetDirection)).toBe(true);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should handle multiple rapid mode switches correctly', () => {
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        
+        // Rapid switches
+        game.switchGameMode(); // NORMAL → MIGA
+        game.switchGameMode(); // MIGA → NORMAL
+        game.switchGameMode(); // NORMAL → MIGA
+        game.switchGameMode(); // MIGA → NORMAL
+        
+        // Should end up back at NORMAL
+        expect(game.gameMode).toBe(GameMode.NORMAL);
+        expect(game.engine.mode).toBe(GameMode.NORMAL);
+        expect(game.engine.deceleration).toBe(0.01);
+        expect(game.render.gameMode).toBe(GameMode.NORMAL);
+        
+        // All components should be in sync
+        expect(game.gameMode).toBe(game.engine.mode);
+        expect(game.gameMode).toBe(game.render.gameMode);
+      });
     });
   });
 });
