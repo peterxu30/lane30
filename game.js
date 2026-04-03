@@ -448,7 +448,7 @@ class Game {
 
   startNewGame() {
     this.resetGame();
-    this.gameState = GameStates.NOT_RUNNING;
+    this.gameState = GameStates.INITIALIZED;
   }
 
   run() {    
