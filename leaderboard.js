@@ -18,6 +18,7 @@ export class Leaderboard {
     this._gameMode = 'NORMAL';
     this._activeTab = 'NORMAL';
     this._onPlayAgain = null;
+    this._cachedRows = null;
     this.available = false;
 
     // Probe the API on load. Resolves quickly; hides the leaderboard button
@@ -38,22 +39,36 @@ export class Leaderboard {
     this._viewBtn.addEventListener('click', () => this._openBoard(this._gameMode));
   }
 
-  /** Called when the game ends. Shows the submit-score panel. */
-  showSubmit(score, gameMode, onPlayAgain) {
+  /** Called when the game ends. Checks qualification before showing the submit panel. */
+  async showSubmit(score, gameMode, onPlayAgain) {
     this._score = score;
     this._gameMode = gameMode;
     this._activeTab = gameMode;
     this._onPlayAgain = onPlayAgain;
-
-    const modeLabel = gameMode === 'MIGA' ? 'MIGA (Hell Edition)' : 'Normal';
-    this._scoreText.textContent = `${modeLabel} · Final score: ${score}`;
-    this._nameInput.value = '';
-    this._status.textContent = '';
-
-    this._submitPanel.style.display = '';
-    this._boardPanel.style.display = 'none';
     this._overlay.style.display = 'flex';
-    setTimeout(() => this._nameInput.focus(), 80);
+
+    // Fetch current top 10 to decide whether this score qualifies
+    let qualifies = true;
+    try {
+      const res = await fetch(`/api/leaderboard?mode=${gameMode}`);
+      const rows = await res.json();
+      this._cachedRows = { mode: gameMode, rows };
+      qualifies = rows.length < 10 || score > rows[rows.length - 1].score;
+    } catch {
+      // If the fetch fails, default to showing the submit form
+    }
+
+    if (qualifies) {
+      const modeLabel = gameMode === 'MIGA' ? 'MIGA (Hell Edition)' : 'Normal';
+      this._scoreText.textContent = `${modeLabel} · Final score: ${score}`;
+      this._nameInput.value = '';
+      this._status.textContent = '';
+      this._submitPanel.style.display = '';
+      this._boardPanel.style.display = 'none';
+      setTimeout(() => this._nameInput.focus(), 80);
+    } else {
+      this._showBoard();
+    }
   }
 
   /** Opens the leaderboard view directly (from the button). */
@@ -118,24 +133,34 @@ export class Leaderboard {
   }
 
   async _loadList(mode) {
+    // Use the rows already fetched during qualification check to avoid a double-fetch
+    if (this._cachedRows?.mode === mode) {
+      this._renderRows(this._cachedRows.rows);
+      this._cachedRows = null;
+      return;
+    }
     this._list.innerHTML = '<li class="lb-dim">Loading…</li>';
     try {
       const res = await fetch(`/api/leaderboard?mode=${mode}`);
       const rows = await res.json();
-      if (!rows.length) {
-        this._list.innerHTML = '<li class="lb-dim">No scores yet — be the first!</li>';
-        return;
-      }
-      this._list.innerHTML = rows.map((r, i) =>
-        `<li>
-          <span class="lb-rank">${i + 1}</span>
-          <span class="lb-name">${esc(r.player_name)}</span>
-          <span class="lb-pts">${r.score}</span>
-        </li>`
-      ).join('');
+      this._renderRows(rows);
     } catch {
       this._list.innerHTML = '<li class="lb-dim">Failed to load scores.</li>';
     }
+  }
+
+  _renderRows(rows) {
+    if (!rows.length) {
+      this._list.innerHTML = '<li class="lb-dim">No scores yet — be the first!</li>';
+      return;
+    }
+    this._list.innerHTML = rows.map((r, i) =>
+      `<li>
+        <span class="lb-rank">${i + 1}</span>
+        <span class="lb-name">${esc(r.player_name)}</span>
+        <span class="lb-pts">${r.score}</span>
+      </li>`
+    ).join('');
   }
 
   _handlePlayAgain() {

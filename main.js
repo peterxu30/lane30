@@ -5,7 +5,7 @@ import { Leaderboard } from './leaderboard.js';
   const game = new Game();
   const leaderboard = new Leaderboard();
 
-  game.onGameOver = async (score, mode) => {
+  game.onEnterLeaderboard = async (score, mode) => {
     await leaderboard._ready;
     if (leaderboard.available) {
       leaderboard.showSubmit(score, mode, () => game.startNewGame());
