@@ -110,6 +110,7 @@ export class Leaderboard {
 
     this._saveBtn.disabled = false;
     this._saveBtn.textContent = 'Save Score';
+    this._cachedRows = null;
     this._showBoard();
   }
 
