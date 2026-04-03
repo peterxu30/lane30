@@ -342,7 +342,7 @@ class Game {
 
     switch (this.gameState) {
       case GameStates.INITIALIZED:
-        // INITIALIZED has the same behavior as NOT_RUNNING
+        this.renderState = RenderStates.INITIALIZED;
         if (!isUserInput) {
           break;
         }
