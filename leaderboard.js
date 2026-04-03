@@ -18,6 +18,14 @@ export class Leaderboard {
     this._gameMode = 'NORMAL';
     this._activeTab = 'NORMAL';
     this._onPlayAgain = null;
+    this.available = false;
+
+    // Probe the API on load. Resolves quickly; hides the leaderboard button
+    // and disables the post-game modal if the API isn't reachable (e.g. GitHub Pages).
+    this._ready = fetch('/api/leaderboard?mode=NORMAL')
+      .then(r => { this.available = r.ok; })
+      .catch(() => { this.available = false; })
+      .finally(() => { if (!this.available) this._viewBtn.style.display = 'none'; });
 
     this._saveBtn.addEventListener('click', () => this._handleSave());
     this._skipBtn.addEventListener('click', () => this._showBoard());

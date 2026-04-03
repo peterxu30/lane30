@@ -5,8 +5,13 @@ import { Leaderboard } from './leaderboard.js';
   const game = new Game();
   const leaderboard = new Leaderboard();
 
-  game.onGameOver = (score, mode) => {
-    leaderboard.showSubmit(score, mode, () => game.startNewGame());
+  game.onGameOver = async (score, mode) => {
+    await leaderboard._ready;
+    if (leaderboard.available) {
+      leaderboard.showSubmit(score, mode, () => game.startNewGame());
+    } else {
+      game.startNewGame();
+    }
   };
 
   game.run();
