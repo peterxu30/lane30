@@ -407,6 +407,9 @@ class Game {
         if (this.isGameOver()) {
           // No more frames left in game
           this.gameState = GameStates.OVER;
+          const finalScore = this.frames[9]?.cumulative ?? 0;
+          const modeName = this.gameMode.description.toUpperCase();
+          this.onGameOver?.(finalScore, modeName);
         } else {
           if (shouldResetPins) {
             // No more rolls left in frame
@@ -441,6 +444,11 @@ class Game {
 
   isGameOver() {
     return this.currentFrame >= 10;
+  }
+
+  startNewGame() {
+    this.resetGame();
+    this.gameState = GameStates.NOT_RUNNING;
   }
 
   run() {    
