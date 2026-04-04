@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lane 30 · Leaderboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #222;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #6979e0;
+      font-size: 2.2em;
+      margin: 0 0 6px;
+    }
+    .subtitle {
+      color: #888;
+      font-size: 0.9em;
+      margin: 0 0 32px;
+    }
+    .subtitle a {
+      color: #6979e0;
+      text-decoration: none;
+    }
+    .subtitle a:hover { text-decoration: underline; }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      background: #444;
+      color: #999;
+      padding: 7px 24px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .tab.active { background: #6979e0; color: #fff; }
+    .tab:hover:not(.active) { background: #555; }
+    .board {
+      width: 100%;
+      max-width: 420px;
+    }
+    ol {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 8px;
+      border-bottom: 1px solid #333;
+      font-size: 0.95em;
+    }
+    .rank { color: #666; width: 24px; flex-shrink: 0; text-align: right; }
+    .rank.top { color: #6979e0; font-weight: bold; }
+    .name { flex: 1; }
+    .score { font-weight: bold; color: #6979e0; }
+    .dim { color: #666; text-align: center; padding: 24px 0; display: block; }
+  </style>
+</head>
+<body>
+  <h1>Lane 30</h1>
+  <p class="subtitle">Leaderboard · <a href="/">Play the game</a></p>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-normal">NORMAL</button>
+    <button class="tab"        id="tab-miga">MIGA</button>
+  </div>
+
+  <div class="board">
+    <ol id="list"><li><span class="dim">Loading…</span></li></ol>
+  </div>
+
+  <script>
+    let activeMode = 'NORMAL';
+
+    const list      = document.getElementById('list');
+    const tabNormal = document.getElementById('tab-normal');
+    const tabMiga   = document.getElementById('tab-miga');
+
+    tabNormal.addEventListener('click', () => switchTab('NORMAL'));
+    tabMiga.addEventListener('click',   () => switchTab('MIGA'));
+
+    function switchTab(mode) {
+      if (mode === activeMode) return;
+      activeMode = mode;
+      tabNormal.classList.toggle('active', mode === 'NORMAL');
+      tabMiga.classList.toggle('active',   mode === 'MIGA');
+      load(mode);
+    }
+
+    function esc(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function load(mode) {
+      list.innerHTML = '<li><span class="dim">Loading…</span></li>';
+      try {
+        const res  = await fetch(`/api/leaderboard?mode=${mode}`);
+        const rows = await res.json();
+        if (!rows.length) {
+          list.innerHTML = '<li><span class="dim">No scores yet.</span></li>';
+          return;
+        }
+        list.innerHTML = rows.map((r, i) => `
+          <li>
+            <span class="rank ${i < 3 ? 'top' : ''}">${i + 1}</span>
+            <span class="name">${esc(r.player_name)}</span>
+            <span class="score">${r.score}</span>
+          </li>`).join('');
+      } catch {
+        list.innerHTML = '<li><span class="dim">Failed to load scores.</span></li>';
+      }
+    }
+
+    load(activeMode);
+  </script>
+</body>
+</html>

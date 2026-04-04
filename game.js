@@ -342,7 +342,7 @@ class Game {
 
     switch (this.gameState) {
       case GameStates.INITIALIZED:
-        // INITIALIZED has the same behavior as NOT_RUNNING
+        this.renderState = RenderStates.INITIALIZED;
         if (!isUserInput) {
           break;
         }
@@ -405,7 +405,9 @@ class Game {
         let shouldResetPins = this.handleRoll();
         this.gameState = GameStates.NOT_RUNNING;
         if (this.isGameOver()) {
-          // No more frames left in game
+          // No more frames left in game — store result, wait for player tap before showing leaderboard
+          this._endScore = this.frames[9]?.cumulative ?? 0;
+          this._endMode  = this.gameMode.description.toUpperCase();
           this.gameState = GameStates.OVER;
         } else {
           if (shouldResetPins) {
@@ -422,15 +424,16 @@ class Game {
         break;
       case GameStates.OVER:
         // OVER means the last roll of the tenth frame has happened.
-        // Reset the game and wait for player to start again.
+        // Show game-over text; wait for player tap to open the leaderboard.
         this.renderState = RenderStates.OVER;
-
-        if (!isUserInput) {
-          break;
-        }
-
-        this.resetGame();
-        this.gameState = GameStates.NOT_RUNNING;
+        if (!isUserInput) break;
+        this.gameState = GameStates.LEADERBOARD;
+        this.onEnterLeaderboard?.(this._endScore, this._endMode);
+        break;
+      case GameStates.LEADERBOARD:
+        // Leaderboard modal is visible. Canvas stays on game-over screen.
+        // startNewGame() transitions out of this state when the player is done.
+        this.renderState = RenderStates.OVER;
         break;
     }
 
@@ -441,6 +444,11 @@ class Game {
 
   isGameOver() {
     return this.currentFrame >= 10;
+  }
+
+  startNewGame() {
+    this.resetGame();
+    this.gameState = GameStates.INITIALIZED;
   }
 
   run() {    

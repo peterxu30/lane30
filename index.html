@@ -83,6 +83,122 @@
       margin-top: 0%;
       margin-bottom: 0%;
     }
+
+    /* ── Leaderboard view button ── */
+    #lb-view-btn {
+      display: block;
+      margin: 6px auto 0;
+      font-size: 0.75em;
+      background: rgba(105,121,224,0.2);
+      color: #aab;
+      border: 1px solid rgba(105,121,224,0.3);
+      padding: 4px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    #lb-view-btn:hover { background: rgba(105,121,224,0.4); color: #fff; }
+
+    /* ── Modal overlay ── */
+    #lb-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #lb-modal {
+      background: #2c2c2c;
+      border-radius: 14px;
+      padding: 28px 28px 24px;
+      width: min(380px, 92vw);
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    #lb-modal h2 {
+      margin: 0 0 6px;
+      font-size: 1.4em;
+      color: #6979e0;
+    }
+    #lb-score-text {
+      margin: 0 0 18px;
+      font-size: 0.9em;
+      color: #bbb;
+    }
+    #lb-name {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid #555;
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 1em;
+      box-sizing: border-box;
+      outline: none;
+    }
+    #lb-name:focus { border-color: #6979e0; }
+    #lb-status {
+      min-height: 1.3em;
+      font-size: 0.8em;
+      color: #e07070;
+      margin: 6px 0 10px;
+    }
+    .lb-btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    /* ── Tabs ── */
+    #lb-tabs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .lb-tab {
+      background: #444;
+      color: #999;
+      padding: 5px 18px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.82em;
+    }
+    .lb-tab.lb-active { background: #6979e0; color: #fff; }
+    /* ── Score list ── */
+    #lb-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+      text-align: left;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    #lb-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 4px;
+      border-bottom: 1px solid #3a3a3a;
+      font-size: 0.88em;
+    }
+    #lb-list .lb-rank { color: #666; width: 22px; flex-shrink: 0; }
+    #lb-list .lb-name { flex: 1; }
+    #lb-list .lb-pts  { font-weight: bold; color: #6979e0; }
+    #lb-list .lb-dim  { color: #666; padding: 14px 0; text-align: center; display: block; }
+    /* ── Play Again ── */
+    #lb-play-again {
+      background: #6979e0;
+      color: #fff;
+      padding: 10px 28px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95em;
+    }
+    #lb-play-again:hover { background: #7a8af0; }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -123,7 +239,38 @@
       </tbody>
     </table>
     <canvas id="lane" width="640" height="900"></canvas>
+    <button id="lb-view-btn">Leaderboard</button>
     <script src="main.js" type="module"></script>
+  </div>
+
+  <!-- Leaderboard modal -->
+  <div id="lb-overlay">
+    <div id="lb-modal">
+
+      <!-- Phase 1: submit score -->
+      <div id="lb-submit">
+        <h2>Game Over</h2>
+        <p id="lb-score-text"></p>
+        <input id="lb-name" type="text" maxlength="20" placeholder="Your name" autocomplete="off" spellcheck="false" />
+        <p id="lb-status"></p>
+        <div class="lb-btn-row">
+          <button id="lb-save">Save Score</button>
+          <button id="lb-skip">Skip</button>
+        </div>
+      </div>
+
+      <!-- Phase 2: view leaderboard -->
+      <div id="lb-board" style="display:none">
+        <h2>Leaderboard</h2>
+        <div id="lb-tabs">
+          <button id="lb-tab-normal" class="lb-tab lb-active">NORMAL</button>
+          <button id="lb-tab-miga"   class="lb-tab">MIGA</button>
+        </div>
+        <ol id="lb-list"></ol>
+        <button id="lb-play-again">Play Again</button>
+      </div>
+
+    </div>
   </div>
 </body>
 </html>
