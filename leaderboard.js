@@ -42,6 +42,7 @@ export class Leaderboard {
     this._gameMode = gameMode;
     this._activeTab = gameMode;
     this._onPlayAgain = onPlayAgain;
+    this._overlay.querySelector('h2').textContent = score === 300 ? 'PERFECT GAME' : 'Game Over';
     this._overlay.style.display = 'flex';
 
     // Fetch current top 10 to decide whether this score qualifies
