@@ -7,6 +7,9 @@ Vibe-coded by ChatGPT. Heavily upgraded, refactored, and bug-fixed by PKING.
 
 Play it at [https://peterxu30.github.io/lane30](https://peterxu30.github.io/lane30)
 
+**Update 4/4/2026:** The app has been ported to Vercel with new leaderboard functionality. Play the game at [https://lane30.vercel.app](https://lane30.vercel.app)
+* Leaderboard available at [https://lane30.vercel.app/leaderboard](https://lane30.vercel.app/leaderboard)
+
 # Features
 - Simple collision physics: Ball hits one way, pins go the other. Pins naturally decelerate.
 - Accurate scoring table: Correct bowling scoring including special frame 10 logic.
@@ -15,6 +18,7 @@ Play it at [https://peterxu30.github.io/lane30](https://peterxu30.github.io/lane
 - Dynamic resolution scaling: The game maintains the same visual fidelity (PPI) regardless of device resolution.
 - Fixed refresh rate: The game maintains a constant tick rate regardless of device screen refresh rate while keeping screen refresh rate unlocked.
 - Touch actions on mobile devices and mouse input on computers.
+- Persistent leaderboard support for top 10 scores. Hosted on Vercel with Neon database.
 
 # Testing
 
