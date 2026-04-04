@@ -12,7 +12,6 @@ export class Leaderboard {
     this._tabMiga = document.getElementById('lb-tab-miga');
     this._list = document.getElementById('lb-list');
     this._playAgainBtn = document.getElementById('lb-play-again');
-    this._viewBtn = document.getElementById('lb-view-btn');
 
     this._score = 0;
     this._gameMode = 'NORMAL';
@@ -21,12 +20,11 @@ export class Leaderboard {
     this._cachedRows = null;
     this.available = false;
 
-    // Probe the API on load. Resolves quickly; hides the leaderboard button
-    // and disables the post-game modal if the API isn't reachable (e.g. GitHub Pages).
+    // Probe the API on load. Resolves quickly; disables the post-game modal
+    // if the API isn't reachable (e.g. GitHub Pages).
     this._ready = fetch('/api/leaderboard?mode=NORMAL')
       .then(r => { this.available = r.ok; })
-      .catch(() => { this.available = false; })
-      .finally(() => { if (!this.available) this._viewBtn.style.display = 'none'; });
+      .catch(() => { this.available = false; });
 
     this._saveBtn.addEventListener('click', () => this._handleSave());
     this._skipBtn.addEventListener('click', () => this._showBoard());
@@ -36,7 +34,6 @@ export class Leaderboard {
     });
     this._tabNormal.addEventListener('click', () => this._switchTab('NORMAL'));
     this._tabMiga.addEventListener('click', () => this._switchTab('MIGA'));
-    this._viewBtn.addEventListener('click', () => this._openBoard(this._gameMode));
   }
 
   /** Called when the game ends. Checks qualification before showing the submit panel. */
@@ -71,16 +68,6 @@ export class Leaderboard {
     }
   }
 
-  /** Opens the leaderboard view directly (from the button). */
-  _openBoard(mode) {
-    this._activeTab = mode;
-    this._onPlayAgain = null;
-    this._submitPanel.style.display = 'none';
-    this._boardPanel.style.display = '';
-    this._overlay.style.display = 'flex';
-    this._updateTabs(mode);
-    this._loadList(mode);
-  }
 
   _hide() {
     this._overlay.style.display = 'none';
