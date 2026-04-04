@@ -12,11 +12,22 @@ export default async function handler(req, res) {
 
   const sql = neon(process.env.DATABASE_URL);
   const rows = await sql`
-    SELECT player_name, score, created_at
-    FROM scores
-    WHERE game_mode = ${mode}
+    WITH perfect AS (
+      SELECT player_name, score, created_at
+      FROM scores
+      WHERE game_mode = ${mode} AND score = 300
+    ),
+    non_perfect AS (
+      SELECT player_name, score, created_at
+      FROM scores
+      WHERE game_mode = ${mode} AND score < 300
+      ORDER BY score DESC, created_at ASC
+      LIMIT GREATEST(0, 10 - (SELECT COUNT(*) FROM perfect))
+    )
+    SELECT * FROM perfect
+    UNION ALL
+    SELECT * FROM non_perfect
     ORDER BY score DESC, created_at ASC
-    LIMIT 10
   `;
 
   res.setHeader('Cache-Control', 's-maxage=10');

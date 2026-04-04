@@ -50,7 +50,7 @@ export class Leaderboard {
       const res = await fetch(`/api/leaderboard?mode=${gameMode}`);
       const rows = await res.json();
       this._cachedRows = { mode: gameMode, rows };
-      qualifies = rows.length < 10 || score > rows[rows.length - 1].score;
+      qualifies = score === 300 || rows.length < 10 || score > rows[rows.length - 1].score;
     } catch {
       // If the fetch fails, default to showing the submit form
     }
