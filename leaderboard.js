@@ -69,6 +69,16 @@ export class Leaderboard {
   }
 
 
+  openBoard(mode) {
+    this._activeTab = mode;
+    this._onPlayAgain = null;
+    this._submitPanel.style.display = 'none';
+    this._boardPanel.style.display = '';
+    this._overlay.style.display = 'flex';
+    this._updateTabs(mode);
+    this._loadList(mode);
+  }
+
   _hide() {
     this._overlay.style.display = 'none';
   }
