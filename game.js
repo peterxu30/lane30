@@ -290,6 +290,12 @@ class Game {
     return pointerIsInTopRightCorner;
   }
 
+  shouldOpenLeaderboard(pointerX, pointerY) {
+    let leftThirdLaneX = (this.lane.x + this.lane.width + 2*this.lane.gutterWidth) / 3;
+    let topThirdLaneY  = (this.lane.y + this.lane.height) / 3;
+    return pointerX < leftThirdLaneX && pointerY < topThirdLaneY;
+  }
+
   activateGameMode(gameMode) {
     this.gameMode = gameMode;
     this.gameState = GameStates.INITIALIZED;
@@ -311,6 +317,9 @@ class Game {
       case GameStates.INITIALIZED:
         if (this.shouldSwitchGameMode(pointerX, pointerY)) {
           this.switchGameMode();
+        }
+        if (this.shouldOpenLeaderboard(pointerX, pointerY)) {
+          this.onOpenLeaderboard?.();
         }
       case GameStates.NOT_RUNNING:
         const x = Math.abs(pointerX - this.ball.x);
