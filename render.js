@@ -47,6 +47,7 @@ const gameModeCopyMap = {
     gameNotStartedTitle: "PKING 30th Anniversary Edition",
     gameNotStartedSubtitle: "Drag ball left and right to aim",
     returnBallText: "Tap to return ball",
+    leaderboardHintText: "Tap top left for leaderboard",
   },
   [GameMode.MIGA]: {
     gameOverTitle: "TOUGH GAME",
@@ -54,6 +55,7 @@ const gameModeCopyMap = {
     returnBallText: "Tap to suffer",
     gameNotStartedTitle: "Welcome to Hell Edition",
     gameNotStartedSubtitle: "Good luck",
+    leaderboardHintText: "Tap top left for leaderboard",
   },
 }
 
@@ -405,6 +407,7 @@ export class Render {
     let gameNotStartedTitleCopy = gameModeCopy.gameNotStartedTitle;
     let gameNotStartedSubtitleCopy = gameModeCopy.gameNotStartedSubtitle;
     let returnBallTextCopy = gameModeCopy.returnBallText;
+    let leaderboardHintCopy = gameModeCopy.leaderboardHintText;
 
     this.ctx.textAlign = 'center';
 
@@ -414,17 +417,21 @@ export class Render {
     this.ctx.font = `${fontStyle} ${adjustedTitleFontSize}px ${fontType}`;
     const textX = this.#getCanvasWidth() / 2;
     const textY = this.#getCanvasHeight() / 2.5;
-    this.ctx.fillText(gameNotStartedTitleCopy, textX, textY); 
+    this.ctx.fillText(gameNotStartedTitleCopy, textX, textY);
 
     const textMetrics = this.ctx.measureText(gameNotStartedSubtitleCopy);
     const textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtextY = textY + textHeight * 1.7;
-    this.ctx.fillText(gameNotStartedSubtitleCopy, textX, subtextY); 
+    this.ctx.fillText(gameNotStartedSubtitleCopy, textX, subtextY);
 
     this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
     const subtext2Y = textY + textHeight * 3.4;
-    this.ctx.fillText(returnBallTextCopy, textX, subtext2Y); 
+    this.ctx.fillText(returnBallTextCopy, textX, subtext2Y);
+
+    this.ctx.font = `${fontStyle} ${adjustedSubtitleFontSize}px ${fontType}`;
+    const subtext3Y = textY + textHeight * 5.1;
+    this.ctx.fillText(leaderboardHintCopy, textX, subtext3Y);
   }
 
   writeGameOverText() {
