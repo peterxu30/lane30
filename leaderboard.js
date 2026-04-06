@@ -8,6 +8,7 @@ export class Leaderboard {
     this._saveBtn = document.getElementById('lb-save');
     this._skipBtn = document.getElementById('lb-skip');
     this._status = document.getElementById('lb-status');
+    this._hint = document.getElementById('lb-hint');
     this._tabNormal = document.getElementById('lb-tab-normal');
     this._tabMiga = document.getElementById('lb-tab-miga');
     this._list = document.getElementById('lb-list');
@@ -61,6 +62,7 @@ export class Leaderboard {
       this._scoreText.textContent = `${modeLabel} · Final score: ${score}`;
       this._nameInput.value = '';
       this._status.textContent = '';
+      this._hint.textContent = score === 300 && gameMode === 'NORMAL' ? 'Hint: tap the top right' : '';
       this._submitPanel.style.display = '';
       this._boardPanel.style.display = 'none';
       setTimeout(() => this._nameInput.focus(), 80);
