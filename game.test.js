@@ -702,23 +702,162 @@ describe('Game', () => {
     describe('edge cases', () => {
       it('should handle multiple rapid mode switches correctly', () => {
         expect(game.gameMode).toBe(GameMode.NORMAL);
-        
+
         // Rapid switches
         game.switchGameMode(); // NORMAL → MIGA
         game.switchGameMode(); // MIGA → NORMAL
         game.switchGameMode(); // NORMAL → MIGA
         game.switchGameMode(); // MIGA → NORMAL
-        
+
         // Should end up back at NORMAL
         expect(game.gameMode).toBe(GameMode.NORMAL);
         expect(game.engine.mode).toBe(GameMode.NORMAL);
         expect(game.engine.deceleration).toBe(0.01);
         expect(game.render.gameMode).toBe(GameMode.NORMAL);
-        
+
         // All components should be in sync
         expect(game.gameMode).toBe(game.engine.mode);
         expect(game.gameMode).toBe(game.render.gameMode);
       });
+    });
+  });
+
+  describe('shouldOpenLeaderboard', () => {
+    it('should return true for top-left corner', () => {
+      // leftThirdLaneX = (0 + 350 + 2*20) / 3 ≈ 130
+      // topThirdLaneY  = (0 + 683) / 3 ≈ 228
+      expect(game.shouldOpenLeaderboard(50, 100)).toBe(true);
+    });
+
+    it('should return false for top-right corner', () => {
+      expect(game.shouldOpenLeaderboard(350, 100)).toBe(false);
+    });
+
+    it('should return false for bottom-left corner', () => {
+      expect(game.shouldOpenLeaderboard(50, 500)).toBe(false);
+    });
+
+    it('should return false for center', () => {
+      expect(game.shouldOpenLeaderboard(195, 350)).toBe(false);
+    });
+  });
+
+  describe('startNewGame', () => {
+    it('should set gameState to INITIALIZED', () => {
+      game.gameState = GameStates.LEADERBOARD;
+      game.startNewGame();
+      expect(game.gameState).toBe(GameStates.INITIALIZED);
+    });
+
+    it('should reset frames', () => {
+      game.frames[0].roll1 = 10;
+      game.currentFrame = 5;
+      game.startNewGame();
+      expect(game.frames[0].roll1).toBe(null);
+      expect(game.currentFrame).toBe(0);
+    });
+
+    it('should reset pins', () => {
+      game.pins[0].active = false;
+      game.startNewGame();
+      expect(game.pins[0].active).toBe(true);
+    });
+  });
+
+  describe('INITIALIZED renderState on no input (bug fix)', () => {
+    it('should set renderState to INITIALIZED when in INITIALIZED state without user input', () => {
+      game.gameState = GameStates.INITIALIZED;
+      game.renderState = RenderStates.OVER; // simulate coming back from game-over
+      game.handleGameState(false);
+      expect(game.renderState).toBe(RenderStates.INITIALIZED);
+      expect(game.gameState).toBe(GameStates.INITIALIZED); // no transition without input
+    });
+  });
+
+  describe('LEADERBOARD state in handleGameState', () => {
+    it('should set renderState to OVER in LEADERBOARD state', () => {
+      game.gameState = GameStates.LEADERBOARD;
+      game.renderState = RenderStates.RUNNING;
+      game.handleGameState(false);
+      expect(game.renderState).toBe(RenderStates.OVER);
+    });
+
+    it('should stay in LEADERBOARD on user input', () => {
+      game.gameState = GameStates.LEADERBOARD;
+      game.handleGameState(true);
+      expect(game.gameState).toBe(GameStates.LEADERBOARD);
+    });
+  });
+
+  describe('OVER → LEADERBOARD transition', () => {
+    it('should transition to LEADERBOARD on user tap', () => {
+      game.gameState = GameStates.OVER;
+      game._endScore = 150;
+      game._endMode = 'NORMAL';
+      game.onEnterLeaderboard = vi.fn();
+      game.handleGameState(true);
+      expect(game.gameState).toBe(GameStates.LEADERBOARD);
+    });
+
+    it('should call onEnterLeaderboard with stored score and mode', () => {
+      game.gameState = GameStates.OVER;
+      game._endScore = 150;
+      game._endMode = 'NORMAL';
+      const cb = vi.fn();
+      game.onEnterLeaderboard = cb;
+      game.handleGameState(true);
+      expect(cb).toHaveBeenCalledWith(150, 'NORMAL');
+    });
+
+    it('should NOT transition without user input', () => {
+      game.gameState = GameStates.OVER;
+      game.handleGameState(false);
+      expect(game.gameState).toBe(GameStates.OVER);
+    });
+  });
+
+  describe('_endScore and _endMode storage', () => {
+    it('should store correct mode string when game ends', () => {
+      // Drive the game to FRAME_DONE with frame 10 complete
+      game.currentFrame = 9;
+      game.rollInFrame = 2;
+      game.frames[9].roll1 = 10;
+      game.frames[9].roll2 = 5;
+      game.frames[9].cumulative = 135;
+      game.pins.forEach(p => { p.hit = true; p.scored = false; });
+      game.gameState = GameStates.FRAME_DONE;
+      game.handleGameState(false);
+      expect(game._endMode).toBe(game.gameMode.description.toUpperCase());
+    });
+
+    it('should store the cumulative score of frame 9 when game ends', () => {
+      game.currentFrame = 9;
+      game.rollInFrame = 2;
+      game.frames[9].roll1 = 10;
+      game.frames[9].roll2 = 5;
+      game.frames[9].cumulative = 200;
+      game.pins.forEach(p => { p.hit = true; p.scored = false; });
+      game.gameState = GameStates.FRAME_DONE;
+      game.handleGameState(false);
+      expect(game._endScore).toBe(game.frames[9].cumulative);
+    });
+  });
+
+  describe('onOpenLeaderboard callback', () => {
+    it('should call onOpenLeaderboard when top-left tapped in INITIALIZED state', () => {
+      game.gameState = GameStates.INITIALIZED;
+      const cb = vi.fn();
+      game.onOpenLeaderboard = cb;
+      game.pointerDownCallback(50, 100);
+      expect(cb).toHaveBeenCalled();
+    });
+
+    it('should not call onOpenLeaderboard when tapping outside top-left', () => {
+      game.gameState = GameStates.INITIALIZED;
+      const cb = vi.fn();
+      game.onOpenLeaderboard = cb;
+      game.pointerDownCallback(350, 400);
+      expect(cb).not.toHaveBeenCalled();
     });
   });
 });

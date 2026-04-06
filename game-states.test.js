@@ -13,7 +13,7 @@ describe('GameStates', () => {
     expect(GameStates.RUNNING).toBeDefined();
     expect(GameStates.FRAME_DONE).toBeDefined();
     expect(GameStates.OVER).toBeDefined();
-    // RESTART is marked as NOT USED in game-states.js
+    expect(GameStates.LEADERBOARD).toBeDefined();
   });
 
   it('should have symbols as values', () => {
@@ -22,7 +22,7 @@ describe('GameStates', () => {
     expect(typeof GameStates.RUNNING).toBe('symbol');
     expect(typeof GameStates.FRAME_DONE).toBe('symbol');
     expect(typeof GameStates.OVER).toBe('symbol');
-    // RESTART is marked as NOT USED in game-states.js
+    expect(typeof GameStates.LEADERBOARD).toBe('symbol');
   });
 
   it('should have unique symbols', () => {
@@ -41,7 +41,7 @@ describe('GameStates', () => {
     expect(GameStates.RUNNING.description).toBe('running');
     expect(GameStates.FRAME_DONE.description).toBe('frame_done');
     expect(GameStates.OVER.description).toBe('over');
-    // RESTART is marked as NOT USED in game-states.js
+    expect(GameStates.LEADERBOARD.description).toBe('leaderboard');
   });
 });
 
