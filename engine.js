@@ -204,7 +204,7 @@ export class Engine {
   }
 
   reset() {
-    switch (this.gameMode) {
+    switch (this.mode) {
       case GameMode.MIGA:
         this.resetMigaMode();
         return;

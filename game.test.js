@@ -762,6 +762,24 @@ describe('Game', () => {
       game.startNewGame();
       expect(game.pins[0].active).toBe(true);
     });
+
+    it('should reset MIGA rowDirection to RIGHT on new game', () => {
+      game.activateGameMode(GameMode.MIGA);
+      const initialDirection = game.engine.rowDirection[0];
+      // Corrupt direction to simulate mid-game state
+      game.engine.rowDirection[0] = game.engine.rowDirection[1] === initialDirection
+        ? game.engine.rowDirection[0] // fallback: manually flip using migaMode
+        : game.engine.rowDirection[1];
+      // Use migaMode to reliably flip direction via boundary hit
+      const lane = game.lane;
+      const rightBoundary = lane.x + lane.width + 2 * lane.gutterWidth;
+      game.pins[0].x = rightBoundary - 10;
+      game.engine.migaMode(game.pins, lane);
+      expect(game.engine.rowDirection[0]).not.toBe(initialDirection); // confirm changed
+
+      game.startNewGame();
+      expect(game.engine.rowDirection[0]).toBe(initialDirection);
+    });
   });
 
   describe('INITIALIZED renderState on no input (bug fix)', () => {

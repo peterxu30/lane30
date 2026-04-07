@@ -440,17 +440,33 @@ describe('Engine', () => {
         migaPins[0].vx = 10;
         migaPins[0].vy = 10;
         const initialVx = migaPins[0].vx;
-        
+
         migaEngine.update(ball, migaPins, migaLane, 16.67);
-        
+
         // MIGA mode has higher deceleration (0.025 vs 0.01)
         // So velocity should decrease more
         const normalEngine = new Engine(GameMode.NORMAL);
         const normalPin = { id: 1, x: 175, y: 50, r: 14.5, vx: 10, vy: 10, mass: 1, active: true, hit: false };
         normalEngine.update(ball, [normalPin], migaLane, 16.67);
-        
+
         // MIGA pin should have lower velocity after deceleration
         expect(Math.abs(migaPins[0].vx)).toBeLessThan(Math.abs(normalPin.vx));
+      });
+    });
+
+    describe('reset', () => {
+      it('should reset all rowDirections back to the initial RIGHT direction', () => {
+        // Corrupt direction by hitting the right boundary
+        const rightBoundary = migaLane.x + migaLane.width + migaLane.gutterWidth;
+        migaPins[0].x = rightBoundary - 10;
+        migaEngine.migaMode(migaPins, migaLane); // triggers direction flip to LEFT
+
+        const initialDirection = new Engine(GameMode.MIGA).rowDirection[0];
+        expect(migaEngine.rowDirection[0]).not.toBe(initialDirection); // confirm it changed
+
+        migaEngine.reset();
+
+        expect(migaEngine.rowDirection.every(dir => dir === initialDirection)).toBe(true);
       });
     });
   });
